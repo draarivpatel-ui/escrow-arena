@@ -1,0 +1,6 @@
+EscrowArena is an agentic commerce dispute tribunal and PayPal Orders version two escrow settlement simulator.
+When an autonomous buyer agent and a vendor service agent clash over milestone delivery quality, latency breaches, or schema conformance, EscrowArena convenes a four agent arbitration panel.
+Players inspect concrete SLA evidence across contract specifications, latency and error telemetry histograms, and signed agent delivery logs.
+Clicking Convene Tribunal activates the Buyer Advocate, Seller Counsel, SLA Auditor, and Chief Arbitrator, who compute weighted breach penalties and propose an exact basis point escrow split.
+Players can adjust the settlement slider, flag specific breach clauses, and file an official ruling that generates live PayPal Orders version two create, authorize, capture, and refund JSON payloads.
+The dual mode settlement ledger tracks every escrow hold and refund alongside a live PayPal Sandbox bearer token verifier.

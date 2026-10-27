@@ -1,0 +1,213 @@
+[
+  {
+    "do": "eval",
+    "js": "new Promise(r => { const f = () => document.querySelector('#btn-convene') ? r() : setTimeout(f, 50); f(); })"
+  },
+  {
+    "do": "move",
+    "selector": "#case-select",
+    "ms": 600
+  },
+  {
+    "do": "scrollBy",
+    "y": 150,
+    "ms": 900
+  },
+  {
+    "do": "move",
+    "selector": "#milestone-rows",
+    "ms": 650
+  },
+  {
+    "do": "scrollBy",
+    "y": 180,
+    "ms": 900
+  },
+  {
+    "do": "move",
+    "selector": "#latency-canvas",
+    "ms": 700
+  },
+  {
+    "do": "scrollBy",
+    "y": -160,
+    "ms": 850
+  },
+  {
+    "do": "click",
+    "selector": "#btn-convene",
+    "ms": 750
+  },
+  {
+    "do": "scrollBy",
+    "y": 220,
+    "ms": 950
+  },
+  {
+    "do": "move",
+    "selector": "#agent-cards",
+    "ms": 750
+  },
+  {
+    "do": "scrollBy",
+    "y": 180,
+    "ms": 900
+  },
+  {
+    "do": "slide",
+    "selector": "#ruling-slider",
+    "to": 65,
+    "ms": 1000
+  },
+  {
+    "do": "click",
+    "selector": "#btn-apply",
+    "ms": 700
+  },
+  {
+    "do": "click",
+    "selector": "#btn-file",
+    "ms": 750
+  },
+  {
+    "do": "scrollBy",
+    "y": 220,
+    "ms": 950
+  },
+  {
+    "do": "move",
+    "selector": "#ledger-grid",
+    "ms": 700
+  },
+  {
+    "do": "click",
+    "selector": "#ledger-mode",
+    "ms": 650
+  },
+  {
+    "do": "scrollBy",
+    "y": 200,
+    "ms": 900
+  },
+  {
+    "do": "move",
+    "selector": "#payload-request",
+    "ms": 750
+  },
+  {
+    "do": "click",
+    "selector": "#btn-sandbox",
+    "ms": 750
+  },
+  {
+    "do": "scrollBy",
+    "y": -380,
+    "ms": 1000
+  },
+  {
+    "do": "click",
+    "selector": "#btn-next",
+    "ms": 750
+  },
+  {
+    "do": "scrollBy",
+    "y": 160,
+    "ms": 900
+  },
+  {
+    "do": "move",
+    "selector": "#spec-evidence",
+    "ms": 700
+  },
+  {
+    "do": "scrollBy",
+    "y": 160,
+    "ms": 900
+  },
+  {
+    "do": "click",
+    "selector": "#btn-convene",
+    "ms": 750
+  },
+  {
+    "do": "scrollBy",
+    "y": 200,
+    "ms": 950
+  },
+  {
+    "do": "slide",
+    "selector": "#ruling-slider",
+    "to": 42,
+    "ms": 1000
+  },
+  {
+    "do": "click",
+    "selector": "#btn-apply",
+    "ms": 700
+  },
+  {
+    "do": "click",
+    "selector": "#btn-file",
+    "ms": 750
+  },
+  {
+    "do": "scrollBy",
+    "y": 220,
+    "ms": 950
+  },
+  {
+    "do": "move",
+    "selector": "#score-list",
+    "ms": 700
+  },
+  {
+    "do": "scrollBy",
+    "y": -360,
+    "ms": 1000
+  },
+  {
+    "do": "click",
+    "selector": "#btn-next",
+    "ms": 750
+  },
+  {
+    "do": "scrollBy",
+    "y": 180,
+    "ms": 900
+  },
+  {
+    "do": "click",
+    "selector": "#btn-convene",
+    "ms": 750
+  },
+  {
+    "do": "scrollBy",
+    "y": 200,
+    "ms": 950
+  },
+  {
+    "do": "click",
+    "selector": "#btn-apply",
+    "ms": 700
+  },
+  {
+    "do": "click",
+    "selector": "#btn-file",
+    "ms": 750
+  },
+  {
+    "do": "scrollBy",
+    "y": 200,
+    "ms": 900
+  },
+  {
+    "do": "click",
+    "selector": "#ledger-mode",
+    "ms": 650
+  },
+  {
+    "do": "scrollBy",
+    "y": -320,
+    "ms": 950
+  }
+]
