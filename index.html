@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EscrowArena, an AI milestone escrow and dispute tribunal game</title>
+<meta name="description" content="Play the arbiter of a milestone escrow dispute. Weigh git diffs, latency traces and SHA-256 manifests with a three-agent AI tribunal, then watch the PayPal sandbox payloads and audit ledger update.">
+<meta name="theme-color" content="#0f1b2d">
+<meta property="og:title" content="EscrowArena, an AI milestone escrow tribunal">
+<meta property="og:description" content="A dispute-resolution game with a three-agent tribunal, PayPal Orders v2 payload studio and an AG Grid audit ledger.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://aariv.me/escrow-arena/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f1b2d'/%3E%3Cpath d='M16 6v20M8 10h16M8 10l-4 9h8zM24 10l-4 9h8z' fill='none' stroke='%23ffd166' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/styles/ag-grid.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/styles/ag-theme-quartz.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to the dispute</a>
+
+<header class="top">
+  <div class="brand">
+    <svg class="mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M16 6v20M8 10h16M8 10l-4 9h8zM24 10l-4 9h8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+    <div>
+      <h1>EscrowArena</h1>
+      <p class="tag">AI milestone escrow, dispute tribunal and PayPal sandbox studio</p>
+    </div>
+  </div>
+
+  <label class="field" for="case-select"><span>Dispute</span>
+    <select id="case-select"></select>
+  </label>
+
+  <div class="judge" role="group" aria-label="Judge shortcuts">
+    <button id="btn-convene" type="button" class="btn primary">Convene AI Tribunal</button>
+    <button id="btn-apply" type="button" class="btn gold">Apply Tribunal Ruling</button>
+    <button id="btn-sandbox" type="button" class="btn ghost">Run Sandbox Payloads</button>
+  </div>
+</header>
+
+<div id="result-banner" class="result" role="status" aria-live="polite" hidden></div>
+
+<main id="main" class="board">
+  <div class="col">
+    <section class="panel" aria-labelledby="h-case">
+      <h2 id="h-case">Contract and claim</h2>
+      <p id="case-title" class="case-title"></p>
+      <p id="case-brief" class="case-brief"></p>
+      <table class="mini" aria-label="Milestones">
+        <thead><tr><th scope="col">Milestone</th><th scope="col">State</th><th scope="col" class="num">USD</th></tr></thead>
+        <tbody id="milestone-rows"></tbody>
+      </table>
+      <blockquote id="claim-box" class="claim"></blockquote>
+    </section>
+
+    <section class="panel" aria-labelledby="h-spec">
+      <h2 id="h-spec">Evidence: spec and git diff</h2>
+      <div id="spec-evidence"></div>
+    </section>
+
+    <section class="panel" aria-labelledby="h-tel">
+      <h2 id="h-tel">Evidence: latency and artifact hashes</h2>
+      <canvas id="latency-canvas" width="520" height="150" role="img" aria-label="Latency samples against the SLA"></canvas>
+      <div id="telemetry-evidence"></div>
+    </section>
+
+    <section class="panel" aria-labelledby="h-log">
+      <h2 id="h-log">Evidence: dispute log</h2>
+      <ol id="dispute-log" class="log"></ol>
+    </section>
+  </div>
+
+  <div class="col">
+    <section class="panel" aria-labelledby="h-trib">
+      <h2 id="h-trib">AI tribunal</h2>
+      <div id="agent-cards" class="agents"></div>
+    </section>
+
+    <section class="panel" aria-labelledby="h-rule">
+      <h2 id="h-rule">Your ruling</h2>
+      <label class="slider" for="ruling-slider"><span>Share of the milestone released to the seller</span>
+        <input id="ruling-slider" type="range" min="0" max="10000" step="50" value="5000">
+      </label>
+      <div id="split-readout" class="split" aria-live="polite"></div>
+      <fieldset class="flags">
+        <legend>Findings you want on the record</legend>
+        <div id="flag-buttons" class="chips"></div>
+      </fieldset>
+      <div class="actions">
+        <button id="btn-file" type="button" class="btn primary">File my ruling</button>
+        <button id="btn-next" type="button" class="btn ghost">Next dispute</button>
+      </div>
+    </section>
+
+    <section class="panel ledger" aria-labelledby="h-led">
+      <h2 id="h-led">Milestone and dispute audit ledger</h2>
+      <p id="ledger-mode" class="hint-line" aria-live="polite"></p>
+      <div id="ledger-grid" class="ag-theme-quartz" hidden></div>
+      <div id="ledger-fallback" class="table-wrap">
+        <table id="ledger-table" class="ledger-table"></table>
+      </div>
+    </section>
+  </div>
+
+  <div class="col">
+    <section class="panel" aria-labelledby="h-score">
+      <h2 id="h-score">Score tracker</h2>
+      <p id="score-total" class="score-total" aria-live="polite"></p>
+      <ol id="score-list" class="scores"></ol>
+    </section>
+
+    <section class="panel" aria-labelledby="h-pp">
+      <h2 id="h-pp">PayPal payload inspector</h2>
+      <div id="step-tabs" class="tabs" role="group" aria-label="Request steps"></div>
+      <h3 id="payload-title" class="payload-title"></h3>
+      <pre id="payload-request" class="code" tabindex="0" aria-label="Request"></pre>
+      <h3 class="payload-title">Simulated response</h3>
+      <pre id="payload-response" class="code" tabindex="0" aria-label="Response"></pre>
+    </section>
+
+    <section class="panel" aria-labelledby="h-live">
+      <h2 id="h-live">Sandbox connection</h2>
+      <p class="hint-line">Everything runs on a local simulator by default. To send the selected request to the real PayPal sandbox, paste a sandbox bearer token. The token stays in this tab and the live host is limited to the sandbox.</p>
+      <label class="field" for="paypal-token"><span>Sandbox bearer token (optional)</span>
+        <input id="paypal-token" type="password" autocomplete="off" spellcheck="false" placeholder="paste-your-paypal-sandbox-token">
+      </label>
+      <button id="btn-live" type="button" class="btn ghost">Send selected request to sandbox</button>
+      <p id="live-status" class="live-status" aria-live="polite">Mode: simulated sandbox</p>
+    </section>
+  </div>
+</main>
+
+<footer class="foot">
+  <p>EscrowArena is a contest entry built with AI assistance. Parties, evidence and money are invented. No real payment is ever made, and the simulator uses SIM- prefixed identifiers. MIT licensed, source on GitHub under draarivpatel-ui.</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/dist/ag-grid-community.min.js" onerror="window.__agGridFailed = true"></script>
+<script src="engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

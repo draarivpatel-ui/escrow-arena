@@ -1,0 +1,15 @@
+{
+  "name": "escrow-arena",
+  "version": "1.0.0",
+  "description": "EscrowArena: an AI milestone escrow and dispute tribunal game with a PayPal sandbox request studio",
+  "main": "engine.js",
+  "scripts": {
+    "test": "node --test"
+  },
+  "author": "Aariv Patel",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "homepage": "https://aariv.me/escrow-arena/"
+}
