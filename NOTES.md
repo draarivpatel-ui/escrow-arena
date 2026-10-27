@@ -17,7 +17,7 @@ Written 2026-10-26 (local clock, checked with `date`).
 - All six cases produce the intended capture split and flags (tests 20 to 22).
 - Every ruling in a sweep (0, 1, 2500, 5000, 8427, 9999, 10000 bps) runs through the simulator on all six cases without an error response, and the disputed milestone is fully accounted for (tests 49 and 50).
 - The AG Grid script and both stylesheets exist at the pinned jsDelivr URLs (checked with HTTP requests on the build date). 
-- One headless Chrome screenshot at 1400px wide (throwaway profile) after applying the tribunal ruling and filing it showed AG Grid Community mounted with its filter icons, the score banner, the three agent cards and the payload inspector. Only that first dispute in that state was looked at; the other five disputes, the accusation-free fallback table and the narrow layout were not.
+- One headless Chrome screenshot at 1400px wide (throwaway profile) after applying the tribunal ruling and filing it showed AG Grid Community mounted with its filter icons, the score banner, the three agent cards and the payload inspector. Only that first dispute in that state was looked at; the other five disputes, the HTML fallback table (grid unavailable) and the narrow layout were not.
 
 ## What is not verified
 
