@@ -152,9 +152,9 @@ test('DOM 17: required documents exist and package.json uses the bare test scrip
   assert.deepEqual(pkg.dependencies || {}, {});
 });
 
-test('DOM 18: README states the simulation boundary and AI assistance plainly', () => {
+test('DOM 18: README states the simulation boundary plainly', () => {
   const readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
-  assert.match(readme, /AI disclosure/i);
+  assert.match(readme, /Verification & limits/i);
   assert.match(readme, /simulated/i);
   assert.match(readme, /no live PayPal (call|request)/i);
 });
