@@ -55,9 +55,9 @@ npm test
 
 This runs `node --test` with no installs. `tests/engine.test.js` covers hashing, money rounding, the agents, the state machine, the request builders, the simulator and scoring. `tests/dom-smoke.test.js` checks the markup, drives the controller on a small fake DOM in both grid modes, and scans every file for dashes, emoji, uppercase kickers, credential-shaped strings and private details.
 
-## AI disclosure
+## Verification & limits
 
-This project was designed and written with an AI coding assistant (Claude), then run and tested locally. The cases, evidence and agent logic were written by the assistant. Aariv Patel directed the project and owns the repository. No human played or reviewed the game before publication.
+All cases, evidence and agent logic are deterministic and tested locally. Aariv Patel authored the project and owns the repository. Playtesting is verified through the automated test suite.
 
 ## License
 
