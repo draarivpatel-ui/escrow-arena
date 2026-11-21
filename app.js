@@ -19,7 +19,9 @@
 
   function drawLatency(ctx, samples, sla, w, h) {
     ctx.clearRect(0, 0, w, h);
-    var max = Math.max(sla * 1.5, Math.max.apply(null, samples) * 1.05);
+    var sampleMax = 0;
+    for (var si = 0; si < samples.length; si += 1) if (samples[si] > sampleMax) sampleMax = samples[si];
+    var max = Math.max(sla * 1.5, sampleMax * 1.05);
     var pad = 10;
     var bw = (w - pad * 2) / samples.length;
     samples.forEach(function (v, i) {
@@ -192,9 +194,9 @@
       setText('case-title', c.title + ' (' + c.buyer + ' vs ' + c.seller + ')');
       setText('case-brief', c.brief);
       setHTML('milestone-rows', ctl.escrow.milestones.map(function (m) {
-        return '<tr><th scope="row">' + esc(m.id + ' ' + m.title) + '</th><td><span class="state ' + m.state + '">' + m.state + '</span></td><td class="num">' + engine.fmtCents(m.amountCents) + '</td></tr>';
+        return '<tr><th scope="row">' + esc(m.id + ' ' + m.title) + '</th><td><span class="state ' + esc(m.state) + '">' + esc(m.state) + '</span></td><td class="num">' + engine.fmtCents(m.amountCents) + '</td></tr>';
       }).join(''));
-      setHTML('claim-box', '<strong>' + esc(c.claim.by === 'buyer' ? c.buyer : c.seller) + ' claims</strong> (refund demand ' + c.claim.demandRefundBps + ' bps): ' + esc(c.claim.text));
+      setHTML('claim-box', '<strong>' + esc(c.claim.by === 'buyer' ? c.buyer : c.seller) + ' claims</strong> (refund demand ' + esc(c.claim.demandRefundBps) + ' bps): ' + esc(c.claim.text));
     };
 
     ctl.renderEvidence = function () {
@@ -203,7 +205,7 @@
         return '<tr><td>' + esc(r.id) + '</td><td>' + esc(r.text) + (r.addedByBuyer ? ' <em>(added after signing)</em>' : '') + '</td><td class="num">' + Math.round(r.weight * 100) + '%</td></tr>';
       }).join('');
       var fileRows = c.diff.files.map(function (f) {
-        return '<tr><td>' + esc(f.path) + '</td><td class="num">+' + f.added + ' -' + f.removed + '</td><td class="num">' + f.tests + ' tests</td></tr>';
+        return '<tr><td>' + esc(f.path) + '</td><td class="num">+' + esc(f.added) + ' -' + esc(f.removed) + '</td><td class="num">' + esc(f.tests) + ' tests</td></tr>';
       }).join('');
       setHTML('spec-evidence',
         '<table aria-label="Requirements"><thead><tr><th scope="col">Id</th><th scope="col">Requirement</th><th scope="col" class="num">Weight</th></tr></thead><tbody>' + reqRows + '</tbody></table>' +
@@ -212,7 +214,7 @@
         return '<tr><td>' + esc(m.path) + '</td><td class="num">' + m.approvedSha.slice(0, 10) + '</td><td class="num">' + m.deliveredSha.slice(0, 10) + '</td></tr>';
       }).join('');
       setHTML('telemetry-evidence',
-        '<p class="hint-line">Claimed SLA: p95 under ' + c.telemetry.slaP95Ms + ' ms. The tribunal recomputes p95 from the raw samples.</p>' +
+        '<p class="hint-line">Claimed SLA: p95 under ' + esc(c.telemetry.slaP95Ms) + ' ms. The tribunal recomputes p95 from the raw samples.</p>' +
         '<table aria-label="Artifact manifest"><thead><tr><th scope="col">Artifact</th><th scope="col" class="num">Approved SHA-256</th><th scope="col" class="num">Delivered SHA-256</th></tr></thead><tbody>' + manifestRows + '</tbody></table>');
       setHTML('dispute-log', c.log.map(function (e) {
         return '<li><time>' + esc(e.t) + '</time><span class="who ' + esc(e.party) + '">' + esc(e.party) + '</span> (' + esc(e.kind) + '): ' + esc(e.text) + '</li>';
@@ -252,7 +254,7 @@
         '<div class="ref">Buyer refund<strong>' + usd(s.refundCents, engine) + '</strong>' + s.refundBps + ' bps</div>');
       setHTML('flag-buttons', engine.FLAGS.map(function (f) {
         var on = ctl.ruling.flags.indexOf(f.id) !== -1;
-        return '<button type="button" class="chip" data-act="flag" data-arg="' + f.id + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + esc(f.label) + '</button>';
+        return '<button type="button" class="chip" data-act="flag" data-arg="' + esc(f.id) + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + esc(f.label) + '</button>';
       }).join(''));
       var file = $('btn-file');
       if (file) file.disabled = !!ctl.filed;
@@ -272,7 +274,7 @@
           var f = ctl.filed;
           banner.hidden = false;
           banner.className = 'result' + (f.errorBps > 1000 ? ' warn' : '');
-          banner.innerHTML = '<strong>Ruling filed.</strong> Fair split was ' + f.fairCaptureBps + ' bps to the seller, you ruled ' + ctl.ruling.captureBps + ' bps (error ' + f.errorBps + '). Score ' + f.score + '. Findings matched: ' + (f.hits.join(', ') || 'none') + '. Missed: ' + (f.missed.join(', ') || 'none') + '. Wrong: ' + (f.falsePositives.join(', ') || 'none') + '.' + (f.unaidedBonus ? ' Unaided bonus ' + f.unaidedBonus + '.' : '');
+          banner.innerHTML = '<strong>Ruling filed.</strong> Fair split was ' + esc(f.fairCaptureBps) + ' bps to the seller, you ruled ' + esc(ctl.ruling.captureBps) + ' bps (error ' + esc(f.errorBps) + '). Score ' + esc(f.score) + '. Findings matched: ' + (f.hits.map(esc).join(', ') || 'none') + '. Missed: ' + (f.missed.map(esc).join(', ') || 'none') + '. Wrong: ' + (f.falsePositives.map(esc).join(', ') || 'none') + '.' + (f.unaidedBonus ? ' Unaided bonus ' + esc(f.unaidedBonus) + '.' : '');
         } else { banner.hidden = true; banner.innerHTML = ''; }
       }
     };
@@ -330,7 +332,7 @@
     ctl.renderHeader = function () {
       var sel = $('case-select');
       if (sel) {
-        sel.innerHTML = engine.CASES.map(function (c) { return '<option value="' + c.id + '">' + esc(c.title) + '</option>'; }).join('');
+        sel.innerHTML = engine.CASES.map(function (c) { return '<option value="' + esc(c.id) + '">' + esc(c.title) + '</option>'; }).join('');
         sel.value = ctl.caseObj.id;
       }
     };

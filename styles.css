@@ -56,7 +56,6 @@ h3 { font-size: 0.92rem; }
 }
 .brand { display: flex; align-items: center; gap: 12px; }
 .mark { width: 36px; height: 36px; color: var(--gold); }
-.tag { margin: 2px 0 0; color: #b5c2db; font-size: 0.82rem; }
 .judge { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 
 .field { display: grid; gap: 4px; font-size: 0.78rem; color: var(--muted); }
@@ -232,3 +231,18 @@ legend { color: var(--muted); padding: 0 6px; font-size: 0.82rem; }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
+
+/* Verification telemetry additions */
+.kv-list { display: grid; gap: 6px; margin: 12px 0; }
+.kv-list .kv { border-bottom: 1px dotted var(--line); padding: 3px 0; font-size: 0.82rem; }
+.verify-chip {
+  display: inline-flex; align-items: center; padding: 5px 11px; border-radius: 999px;
+  font-family: var(--mono); font-size: 0.72rem; border: 1px solid var(--line);
+  background: #f8faff; color: var(--ink);
+}
+.verify-chip.ok { border-color: #0b7d57; color: #0b7d57; background: #eefaf4; }
+.verify-chip.bad { border-color: #b4283a; color: #b4283a; background: #fdf0f2; }
+#verify-table { min-width: 520px; }
+#verify-table th, #verify-table td { padding: 5px 9px; border-bottom: 1px solid var(--line); text-align: left; }
+#verify-table th { background: #f1f4fb; position: sticky; top: 0; }
+#verify-table td.num { text-align: right; font-family: var(--mono); }

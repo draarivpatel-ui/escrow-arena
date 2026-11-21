@@ -65,8 +65,9 @@ test('DOM 04: the three judge shortcut buttons have their exact labels', () => {
   assert.match(html, /id="btn-sandbox"[^>]*>Run Sandbox Payloads</);
 });
 
-test('DOM 05: AG Grid Community is loaded from a pinned CDN version with an error hook', () => {
-  assert.match(html, /<script src="https:\/\/cdn\.jsdelivr\.net\/npm\/ag-grid-community@32\.3\.3\/dist\/ag-grid-community\.min\.js" onerror="window\.__agGridFailed = true"><\/script>/);
+test('DOM 05: AG Grid Community loads from a pinned CDN version with no inline handlers so the CSP holds', () => {
+  assert.match(html, /<script src="https:\/\/cdn\.jsdelivr\.net\/npm\/ag-grid-community@32\.3\.3\/dist\/ag-grid-community\.min\.js" integrity="sha384-[A-Za-z0-9+/=]+" crossorigin="anonymous"><\/script>/);
+  assert.doesNotMatch(html, /\son(error|click|load)=/);
   assert.match(html, /ag-grid-community@32\.3\.3\/styles\/ag-grid\.css/);
   assert.match(html, /ag-grid-community@32\.3\.3\/styles\/ag-theme-quartz\.css/);
 });

@@ -53,13 +53,22 @@
     });
   }());
 
+  // UTF-8 with replacement semantics: unpaired surrogates encode as U+FFFD,
+  // matching TextEncoder and Node's Buffer, so hashes agree with crypto.sha256.
   function utf8Bytes(str) {
     var out = [];
     for (var i = 0; i < str.length; i += 1) {
       var c = str.charCodeAt(i);
-      if (c >= 0xd800 && c < 0xdc00 && i + 1 < str.length) {
-        c = 0x10000 + ((c - 0xd800) << 10) + (str.charCodeAt(i + 1) - 0xdc00);
-        i += 1;
+      if (c >= 0xd800 && c < 0xdc00) {
+        var n = i + 1 < str.length ? str.charCodeAt(i + 1) : 0;
+        if (n >= 0xdc00 && n < 0xe000) {
+          c = 0x10000 + ((c - 0xd800) << 10) + (n - 0xdc00);
+          i += 1;
+        } else {
+          c = 0xfffd;
+        }
+      } else if (c >= 0xdc00 && c < 0xe000) {
+        c = 0xfffd;
       }
       if (c < 0x80) out.push(c);
       else if (c < 0x800) out.push(0xc0 | (c >> 6), 0x80 | (c & 63));
@@ -112,17 +121,24 @@
   function toCents(value) {
     var m = /^(\d+)(?:\.(\d{1,2}))?$/.exec(String(value).trim());
     if (!m) throw new Error('bad amount: ' + value);
-    return parseInt(m[1], 10) * 100 + parseInt((m[2] || '0').padEnd(2, '0'), 10);
+    var cents = parseInt(m[1], 10) * 100 + parseInt((m[2] || '0').padEnd(2, '0'), 10);
+    if (!Number.isSafeInteger(cents)) throw new RangeError('amount exceeds safe integer range: ' + value);
+    return cents;
   }
 
   function fmtCents(cents) {
+    if (!Number.isFinite(cents)) throw new RangeError('fmtCents expects a finite number');
     var c = Math.round(cents);
-    return Math.floor(c / 100) + '.' + ('0' + (c % 100)).slice(-2);
+    var neg = c < 0 ? '-' : '';
+    var a = Math.abs(c);
+    return neg + Math.floor(a / 100) + '.' + ('0' + (a % 100)).slice(-2);
   }
 
   // Rounding rule: the seller's capture is rounded DOWN to a whole cent and the residual cent
   // always goes to the buyer, so capture + refund equals the milestone amount exactly.
   function splitByBps(amountCents, captureBps) {
+    if (!Number.isSafeInteger(amountCents) || amountCents < 0) throw new RangeError('amountCents must be a nonnegative safe integer');
+    if (!Number.isFinite(captureBps)) throw new RangeError('captureBps must be finite');
     var bps = Math.max(0, Math.min(10000, Math.round(captureBps)));
     var captureCents = Math.floor(amountCents * bps / 10000);
     return { captureBps: bps, refundBps: 10000 - bps, captureCents: captureCents, refundCents: amountCents - captureCents };
@@ -316,7 +332,7 @@
   /* ---------- tribunal agents ---------- */
 
   function p95(samples) {
-    var s = samples.slice().sort(function (a, b) { return a - b; });
+    var s = (Array.isArray(samples) ? samples : []).filter(function (x) { return Number.isFinite(x); }).sort(function (a, b) { return a - b; });
     if (!s.length) return 0;
     return s[Math.max(0, Math.ceil(0.95 * s.length) - 1)];
   }
@@ -330,24 +346,31 @@
 
   // Agent 1: Spec Compliance Auditor
   function auditSpec(c) {
-    var files = c.diff.files;
+    var files = (c.diff && Array.isArray(c.diff.files) ? c.diff.files : []).filter(function (f) { return f && typeof f === 'object'; });
+    var reqs = (Array.isArray(c.requirements) ? c.requirements : []).filter(function (r) { return r && typeof r === 'object'; });
     var mappedPaths = {};
-    var original = c.requirements.filter(function (r) { return !r.addedByBuyer; });
-    var addedByBuyer = c.requirements.filter(function (r) { return r.addedByBuyer; });
-    c.requirements.forEach(function (r) { r.paths.forEach(function (p) { mappedPaths[p] = true; }); });
-    var weightSum = original.reduce(function (a, r) { return a + r.weight; }, 0);
+    var original = reqs.filter(function (r) { return !r.addedByBuyer; });
+    var addedByBuyer = reqs.filter(function (r) { return r.addedByBuyer; });
+    var reqPaths = function (r) { return Array.isArray(r.paths) ? r.paths.filter(function (p) { return typeof p === 'string'; }) : []; };
+    reqs.forEach(function (r) { reqPaths(r).forEach(function (p) { mappedPaths[p] = true; }); });
+    var weightOf = function (r) { var w = r.weight; return Number.isFinite(w) && w > 0 ? w : 0; };
+    var weightSum = original.reduce(function (a, r) { return a + weightOf(r); }, 0);
+    var addedOf = function (f) { return Number.isFinite(f.added) ? f.added : 0; };
+    var testsOf = function (f) { return Number.isFinite(f.tests) ? f.tests : 0; };
     var perReq = original.map(function (r) {
-      var hit = r.paths.filter(function (p) { return files.some(function (f) { return f.path === p && f.added > 0; }); }).length;
-      return { id: r.id, text: r.text, weight: r.weight, coverage: round(hit / r.paths.length, 4) };
+      var paths = reqPaths(r);
+      var hit = paths.filter(function (p) { return files.some(function (f) { return f.path === p && addedOf(f) > 0; }); }).length;
+      // A requirement that maps no files is vacuously delivered; zero weight never poisons the ratio.
+      return { id: r.id, text: r.text, weight: r.weight, coverage: paths.length ? round(hit / paths.length, 4) : 1 };
     });
-    var coverage = perReq.reduce(function (a, r) { return a + r.weight * r.coverage; }, 0) / weightSum;
-    var totalAdded = files.reduce(function (a, f) { return a + f.added; }, 0);
-    var extraAdded = files.filter(function (f) { return !mappedPaths[f.path]; }).reduce(function (a, f) { return a + f.added; }, 0);
+    var coverage = weightSum > 0 ? perReq.reduce(function (a, r) { return a + weightOf(r) * r.coverage; }, 0) / weightSum : 1;
+    var totalAdded = files.reduce(function (a, f) { return a + addedOf(f); }, 0);
+    var extraAdded = files.filter(function (f) { return !mappedPaths[f.path]; }).reduce(function (a, f) { return a + addedOf(f); }, 0);
     return {
       perRequirement: perReq,
       coverageBps: Math.round(coverage * 10000),
       totalAdded: totalAdded,
-      testsAdded: files.reduce(function (a, f) { return a + f.tests; }, 0),
+      testsAdded: files.reduce(function (a, f) { return a + testsOf(f); }, 0),
       unmappedAdded: extraAdded,
       unmappedRatioBps: totalAdded ? Math.round(extraAdded / totalAdded * 10000) : 0,
       buyerAddedRequirements: addedByBuyer.map(function (r) { return r.id; })
@@ -356,9 +379,15 @@
 
   // Agent 2: Telemetry and Hash Verifier
   function verifyTelemetry(c) {
-    var measured = p95(c.telemetry.samples);
-    var ratio = measured / c.telemetry.slaP95Ms;
-    var rows = c.manifest.map(function (m) {
+    var tel = c.telemetry || {};
+    var samples = Array.isArray(tel.samples) ? tel.samples : [];
+    var measured = p95(samples);
+    // Only a positive finite SLA can be met or breached; a missing or invalid
+    // SLA with real samples counts as unverifiable, not as a pass.
+    var validSla = Number.isFinite(tel.slaP95Ms) && tel.slaP95Ms > 0;
+    var ratio = validSla ? measured / tel.slaP95Ms : null;
+    var slaMet = samples.length === 0 ? true : (validSla && measured <= tel.slaP95Ms);
+    var rows = (Array.isArray(c.manifest) ? c.manifest : []).filter(function (m) { return m && typeof m === 'object'; }).map(function (m) {
       var recomputedApproved = sha256Hex(m.approvedContent);
       var recomputedDelivered = sha256Hex(m.deliveredContent);
       return { path: m.path, approvedSha: recomputedApproved, deliveredSha: recomputedDelivered, match: recomputedApproved === recomputedDelivered };
@@ -366,11 +395,11 @@
     var mismatches = rows.filter(function (r) { return !r.match; });
     return {
       measuredP95Ms: measured,
-      slaP95Ms: c.telemetry.slaP95Ms,
-      ratio: round(ratio, 4),
-      slaMet: measured <= c.telemetry.slaP95Ms,
-      slaScoreBps: Math.round(slaScore(ratio) * 10000),
-      samples: c.telemetry.samples.length,
+      slaP95Ms: validSla ? tel.slaP95Ms : (tel.slaP95Ms === undefined ? null : tel.slaP95Ms),
+      ratio: ratio === null ? null : round(ratio, 4),
+      slaMet: slaMet,
+      slaScoreBps: samples.length === 0 ? 10000 : Math.round(slaScore(ratio === null ? Infinity : ratio) * 10000),
+      samples: samples.length,
       manifest: rows,
       mismatches: mismatches.length,
       tampered: mismatches.length > 0,
@@ -380,27 +409,32 @@
 
   // Agent 3: Settlement Split Calculator
   function calculateSettlement(c, spec, tel) {
-    var quality = 0.6 + 0.2 * (tel.slaScoreBps / 10000) + 0.2 * (tel.hashScoreBps / 10000);
-    var captureBps = Math.max(0, Math.min(10000, Math.round(spec.coverageBps * quality)));
-    var split = splitByBps(c.disputed.amountCents, captureBps);
+    var cov = spec && Number.isFinite(spec.coverageBps) ? spec.coverageBps : 0;
+    var slaBps = tel && Number.isFinite(tel.slaScoreBps) ? tel.slaScoreBps : 0;
+    var hashBps = tel && Number.isFinite(tel.hashScoreBps) ? tel.hashScoreBps : 0;
+    var quality = 0.6 + 0.2 * (slaBps / 10000) + 0.2 * (hashBps / 10000);
+    var captureBps = Math.max(0, Math.min(10000, Math.round(cov * quality)));
+    var disputedAmount = c.disputed && Number.isSafeInteger(c.disputed.amountCents) && c.disputed.amountCents >= 0 ? c.disputed.amountCents : 0;
+    var split = splitByBps(disputedAmount, captureBps);
     var flags = [];
     var claimIdx = -1;
-    c.log.forEach(function (e, i) { if (e.kind === 'claim' && claimIdx === -1) claimIdx = i; });
-    var acceptedBefore = c.log.some(function (e, i) { return e.party === 'buyer' && (e.kind === 'approve' || e.kind === 'deploy') && (claimIdx === -1 || i < claimIdx); });
-    var demand = c.claim.demandRefundBps;
+    var log = Array.isArray(c.log) ? c.log : [];
+    log.forEach(function (e, i) { if (e.kind === 'claim' && claimIdx === -1) claimIdx = i; });
+    var acceptedBefore = log.some(function (e, i) { return e.party === 'buyer' && (e.kind === 'approve' || e.kind === 'deploy') && (claimIdx === -1 || i < claimIdx); });
+    var demand = c.claim && Number.isFinite(c.claim.demandRefundBps) ? c.claim.demandRefundBps : 0;
     if (demand >= 5000 && captureBps >= 9000 && acceptedBefore) flags.push('refund_fraud');
-    if (spec.buyerAddedRequirements.length) flags.push('scope_creep_buyer');
-    if (spec.unmappedRatioBps >= 2500) flags.push('scope_creep_seller');
-    if (tel.tampered) flags.push('tampered_artifact');
-    if (!tel.slaMet) flags.push('sla_breach');
-    if (spec.coverageBps < 9000) flags.push('underdelivery');
+    if (spec && Array.isArray(spec.buyerAddedRequirements) && spec.buyerAddedRequirements.length) flags.push('scope_creep_buyer');
+    if (spec && spec.unmappedRatioBps >= 2500) flags.push('scope_creep_seller');
+    if (tel && tel.tampered) flags.push('tampered_artifact');
+    if (tel && !tel.slaMet) flags.push('sla_breach');
+    if (cov < 9000) flags.push('underdelivery');
     return {
       qualityBps: Math.round(quality * 10000),
       captureBps: split.captureBps,
       refundBps: split.refundBps,
       captureCents: split.captureCents,
       refundCents: split.refundCents,
-      amountCents: c.disputed.amountCents,
+      amountCents: disputedAmount,
       flags: flags,
       buyerAcceptedBeforeClaim: acceptedBefore
     };
@@ -410,8 +444,10 @@
     var trace = [];
     var seq = 0;
     function log(agent, tool, input, output) { seq += 1; trace.push({ seq: seq, agent: agent, tool: tool, input: input, output: output }); }
+    var filesN = c.diff && Array.isArray(c.diff.files) ? c.diff.files.length : 0;
+    var reqsN = Array.isArray(c.requirements) ? c.requirements.length : 0;
     var spec = auditSpec(c);
-    log('Spec Compliance Auditor', 'diff_vs_spec', { files: c.diff.files.length, requirements: c.requirements.length }, {
+    log('Spec Compliance Auditor', 'diff_vs_spec', { files: filesN, requirements: reqsN }, {
       coverageBps: spec.coverageBps, unmappedRatioBps: spec.unmappedRatioBps, buyerAdded: spec.buyerAddedRequirements
     });
     var tel = verifyTelemetry(c);
@@ -425,7 +461,7 @@
     log('Settlement Split Calculator', 'split_bps', { amountCents: settle.amountCents, qualityBps: settle.qualityBps }, {
       captureBps: settle.captureBps, refundBps: settle.refundBps, captureCents: settle.captureCents, refundCents: settle.refundCents
     });
-    log('Settlement Split Calculator', 'flag_risks', { demandRefundBps: c.claim.demandRefundBps }, { flags: settle.flags });
+    log('Settlement Split Calculator', 'flag_risks', { demandRefundBps: c.claim && Number.isFinite(c.claim.demandRefundBps) ? c.claim.demandRefundBps : null }, { flags: settle.flags });
     return { spec: spec, telemetry: tel, settlement: settle, trace: trace };
   }
 
@@ -455,14 +491,20 @@
   }
 
   function applyEvent(escrow, milestoneId, event, payload) {
+    if (!escrow || !Array.isArray(escrow.milestones)) return { ok: false, reason: 'bad-escrow' };
     var m = findMilestone(escrow, milestoneId);
     if (!m) return { ok: false, reason: 'unknown-milestone' };
     var allowed = TRANSITIONS[m.state];
     if (!allowed || !Object.prototype.hasOwnProperty.call(allowed, event)) return { ok: false, reason: 'invalid-transition', from: m.state, event: event };
     var from = m.state;
     if (event === 'rule') {
-      var bps = payload && typeof payload.captureBps === 'number' ? payload.captureBps : null;
-      if (bps === null || bps < 0 || bps > 10000) return { ok: false, reason: 'bad-ruling' };
+      // Read captureBps exactly once: a getter could otherwise smuggle a second
+      // ruling mid-flight between the type check and the value read.
+      var raw = payload ? payload.captureBps : undefined;
+      var bps = typeof raw === 'number' ? raw : null;
+      if (bps === null || !Number.isFinite(bps) || bps < 0 || bps > 10000) return { ok: false, reason: 'bad-ruling' };
+      if (m.state !== 'DISPUTED' || from !== 'DISPUTED') return { ok: false, reason: 'invalid-transition', from: m.state, event: event };
+      if (!Number.isSafeInteger(m.amountCents) || m.amountCents < 0) return { ok: false, reason: 'bad-state' };
       var s = splitByBps(m.amountCents, bps);
       m.captureCents = s.captureCents;
       m.refundCents = s.refundCents;
@@ -473,11 +515,15 @@
     } else {
       m.state = allowed[event];
     }
-    escrow.history.push({ milestone: milestoneId, event: event, from: from, to: m.state });
+    if (!Array.isArray(escrow.history)) escrow.history = [];
+    var rec = { milestone: milestoneId, event: event, from: from, to: m.state };
+    if (event === 'rule') rec.captureBps = s.captureBps;
+    escrow.history.push(rec);
     return { ok: true, from: from, to: m.state };
   }
 
   function escrowStatus(escrow) {
+    if (!escrow || !Array.isArray(escrow.milestones)) return 'OPEN';
     var done = escrow.milestones.every(function (m) { return ['RELEASED', 'SETTLED_PARTIAL', 'REFUNDED'].indexOf(m.state) !== -1; });
     return done ? 'COMPLETE' : (escrow.milestones.some(function (m) { return m.state === 'DISPUTED'; }) ? 'IN_DISPUTE' : 'OPEN');
   }
@@ -488,15 +534,18 @@
 
   function money(cents) { return { currency_code: CURRENCY, value: fmtCents(cents) }; }
 
-  function idemKey(label) { return 'escrow-arena-' + hashString(label).toString(16); }
+  // 64 bits of SHA-256: deterministic per label, collision-resistant unlike a 32-bit hash.
+  function idemKey(label) { return 'escrow-arena-' + sha256Hex(label).slice(0, 16); }
 
   function jsonHeaders(label) {
     return { 'Content-Type': 'application/json', 'PayPal-Request-Id': idemKey(label) };
   }
 
   function buildOrderRequest(c, opts) {
+    if (!c || !Array.isArray(c.milestones) || !c.milestones.length) throw new RangeError('case needs at least one milestone');
     var o = opts || {};
-    var intent = o.intent || c.intent;
+    var intent = o.intent === undefined ? c.intent : o.intent;
+    if (intent !== 'AUTHORIZE' && intent !== 'CAPTURE') throw new RangeError('intent must be AUTHORIZE or CAPTURE');
     return {
       method: 'POST',
       path: '/v2/checkout/orders',
@@ -516,6 +565,7 @@
   }
 
   function buildCaptureRequest(authId, cents, finalCapture, label) {
+    if (!Number.isInteger(cents) || cents <= 0) throw new RangeError('capture amount must be a positive integer number of cents');
     return {
       method: 'POST',
       path: '/v2/payments/authorizations/' + authId + '/capture',
@@ -529,6 +579,7 @@
   }
 
   function buildRefundRequest(captureId, cents, label) {
+    if (!Number.isInteger(cents) || cents <= 0) throw new RangeError('refund amount must be a positive integer number of cents');
     return {
       method: 'POST',
       path: '/v2/payments/captures/' + captureId + '/refund',
@@ -538,6 +589,7 @@
   }
 
   function buildPayoutRequest(c, cents, batchLabel) {
+    if (!Number.isInteger(cents) || cents <= 0) throw new RangeError('payout amount must be a positive integer number of cents');
     var fee = platformFee(cents);
     return {
       method: 'POST',
@@ -560,14 +612,19 @@
 
   function createSandbox(seed) {
     var rng = mulberry32(seed || 1);
-    var db = { orders: {}, auths: {}, captures: {}, refunds: {}, payouts: {} };
+    var db = { orders: {}, auths: {}, captures: {}, refunds: {}, payouts: {}, senderBatches: {} };
     var clock = Date.parse('2026-09-30T12:00:00Z');
     function hex(n) { var s = ''; for (var i = 0; i < n; i += 1) s += Math.floor(rng() * 16).toString(16).toUpperCase(); return s; }
     function newId(prefix) { return 'SIM-' + prefix + '-' + hex(10); }
     function stamp(plusDays) { clock += 60000; return new Date(clock + (plusDays || 0) * 86400000).toISOString().replace('.000Z', 'Z'); }
     function err(status, name, msg) { return { status: status, body: { name: name, message: msg, simulated: true } }; }
 
-    function amountOf(a) { return a && a.value !== undefined ? toCents(a.value) : NaN; }
+    function amountOf(a) {
+      try {
+        if (!a || a.value === undefined) return NaN;
+        return toCents(a.value);
+      } catch (e) { return NaN; }
+    }
 
     return {
       db: db,
@@ -575,11 +632,17 @@
         if (!body || (body.intent !== 'AUTHORIZE' && body.intent !== 'CAPTURE')) return err(422, 'INVALID_REQUEST', 'intent must be AUTHORIZE or CAPTURE');
         var units = body.purchase_units;
         if (!Array.isArray(units) || units.length < 1 || units.length > 10) return err(422, 'INVALID_REQUEST', 'purchase_units must hold 1 to 10 units');
+        var parsed = [];
         for (var i = 0; i < units.length; i += 1) {
-          var c = amountOf(units[i].amount);
+          var u = units[i];
+          var c;
+          try { c = u && amountOf(u.amount); } catch (e) { c = NaN; }
           if (!(c > 0)) return err(422, 'INVALID_REQUEST', 'purchase_units[' + i + '].amount must be positive');
+          parsed.push(c);
         }
-        var order = { id: newId('ORD'), intent: body.intent, status: 'CREATED', create_time: stamp(), purchase_units: units.map(function (u) { return { reference_id: u.reference_id, amount: u.amount, custom_id: u.custom_id }; }), simulated: true };
+        // Amounts are snapshotted as formatted strings at validation time, so a
+        // caller mutating or redefining its amount object cannot inflate funds.
+        var order = { id: newId('ORD'), intent: body.intent, status: 'CREATED', create_time: stamp(), purchase_units: units.map(function (u, i) { return { reference_id: u.reference_id, amount: { currency_code: 'USD', value: fmtCents(parsed[i]) }, custom_id: u.custom_id }; }), simulated: true };
         db.orders[order.id] = order;
         return { status: 201, body: order };
       },
@@ -614,6 +677,7 @@
         if (!a) return err(404, 'RESOURCE_NOT_FOUND', 'authorization not found');
         if (a.status === 'VOIDED') return err(422, 'AUTHORIZATION_VOIDED', 'authorization was voided');
         if (a.status === 'CAPTURED') return err(422, 'AUTHORIZATION_ALREADY_CAPTURED', 'authorization is closed');
+        if (a.expiration_time && Date.parse(a.expiration_time) <= clock) return err(422, 'AUTHORIZATION_EXPIRED', 'authorization expired');
         var cents = amountOf(body && body.amount);
         if (!(cents > 0)) return err(422, 'INVALID_REQUEST', 'amount must be positive');
         var remaining = toCents(a.amount.value) - a.capturedCents;
@@ -649,14 +713,19 @@
       },
       createPayout: function (body) {
         if (!body || !body.sender_batch_header || !Array.isArray(body.items) || !body.items.length) return err(400, 'MALFORMED_REQUEST', 'sender_batch_header and items are required');
+        // The sender batch id is the idempotency key: a replay returns the
+        // original batch instead of paying twice.
+        var sid = body.sender_batch_header.sender_batch_id;
+        if (sid && db.senderBatches[sid]) return { status: 200, body: db.senderBatches[sid] };
         var total = 0;
         for (var i = 0; i < body.items.length; i += 1) {
-          var c = amountOf(body.items[i].amount);
+          var c = body.items[i] && amountOf(body.items[i].amount);
           if (!(c > 0)) return err(422, 'INVALID_REQUEST', 'item amount must be positive');
           total += c;
         }
         var p = { batch_header: { payout_batch_id: newId('PAY'), batch_status: 'SUCCESS', sender_batch_header: body.sender_batch_header }, totalCents: total, items: body.items.length, simulated: true };
         db.payouts[p.batch_header.payout_batch_id] = p;
+        if (sid) db.senderBatches[sid] = p;
         return { status: 201, body: p };
       }
     };
@@ -665,61 +734,86 @@
   // Runs the full lifecycle for a case on the simulator: order, authorize or capture, M1 release,
   // then the tribunal ruling on the disputed milestone, then the seller payout.
   function runRuling(c, ruling, seed) {
-    var sb = createSandbox(seed || hashString(c.id));
+    var rb = ruling && ruling.captureBps;
+    if (!Number.isFinite(rb) || rb < 0 || rb > 10000) throw new RangeError('ruling.captureBps must be finite within [0, 10000]');
+    if (!c || !Array.isArray(c.milestones) || !c.disputed) throw new RangeError('case needs milestones and a disputed milestone');
+    var disputedIdx = c.disputedIndex;
+    if (!Number.isInteger(disputedIdx) || disputedIdx < 0 || disputedIdx >= c.milestones.length) throw new RangeError('disputedIndex out of range');
+    var sb = createSandbox(seed === undefined ? hashString(c.id) : seed);
     var steps = [];
     function step(label, req, res) { steps.push({ label: label, request: req, response: res }); return res; }
-    var disputedIdx = c.disputedIndex;
     var orderReq = buildOrderRequest(c);
     var orderRes = step('Create order', orderReq, sb.createOrder(orderReq.body));
     var order = orderRes.body;
-    var ledgerOut = { capturedCents: 0, refundedCents: 0, releasedCents: 0, payoutCents: 0, feeCents: 0 };
-    var split = splitByBps(c.disputed.amountCents, ruling.captureBps);
+    var ledgerOut = { capturedCents: 0, refundedCents: 0, releasedCents: 0, payoutCents: 0, feeCents: 0, capturedPendingCents: 0 };
+    var split = splitByBps(c.disputed.amountCents, rb);
+    if (orderRes.status !== 201 || !order || !order.id) return { sandbox: sb, steps: steps, split: split, totals: ledgerOut, capturedUnitId: null, failed: true };
     var capturedUnitId = null;
+    var failed = false;
+    function ok(res) { return res && res.status >= 200 && res.status < 300 && res.body; }
 
     if (c.intent === 'AUTHORIZE') {
       var authRes = step('Authorize order', { method: 'POST', path: '/v2/checkout/orders/' + order.id + '/authorize', headers: jsonHeaders('authorize:' + order.id), body: null }, sb.authorizeOrder(order.id));
-      var units = authRes.body.purchase_units;
-      var a1 = units[0].payments.authorizations[0];
-      var capReq1 = buildCaptureRequest(a1.id, c.milestones[0].amountCents, true, 'Milestone 1 release');
-      var cap1 = step('Release milestone 1', capReq1, sb.captureAuthorization(a1.id, capReq1.body));
-      ledgerOut.capturedCents += c.milestones[0].amountCents;
-      var ad = units[disputedIdx].payments.authorizations[0];
-      if (split.captureCents > 0) {
+      var units = ok(authRes) ? authRes.body.purchase_units : null;
+      var a1 = units && units[0].payments && units[0].payments.authorizations[0];
+      var ad = units && units[disputedIdx].payments && units[disputedIdx].payments.authorizations[0];
+      if (!a1 || !ad) failed = true;
+      if (!failed) {
+        var capReq1 = buildCaptureRequest(a1.id, c.milestones[0].amountCents, true, 'Milestone 1 release');
+        var cap1 = step('Release milestone 1', capReq1, sb.captureAuthorization(a1.id, capReq1.body));
+        if (!ok(cap1)) failed = true;
+        else ledgerOut.capturedCents += c.milestones[0].amountCents;
+      }
+      if (!failed && split.captureCents > 0) {
         var capReq = buildCaptureRequest(ad.id, split.captureCents, true, 'Tribunal ruling capture');
         var capRes = step('Capture ruling amount', capReq, sb.captureAuthorization(ad.id, capReq.body));
-        capturedUnitId = capRes.body && capRes.body.id;
-        ledgerOut.capturedCents += split.captureCents;
-        ledgerOut.releasedCents += split.refundCents;
-      } else {
+        if (!ok(capRes)) failed = true;
+        else {
+          capturedUnitId = capRes.body.id;
+          ledgerOut.capturedCents += split.captureCents;
+          ledgerOut.releasedCents += split.refundCents;
+        }
+      } else if (!failed) {
         var voidReq = buildVoidRequest(ad.id);
-        step('Void authorization', voidReq, sb.voidAuthorization(ad.id));
-        ledgerOut.releasedCents += c.disputed.amountCents;
+        var voidRes = step('Void authorization', voidReq, sb.voidAuthorization(ad.id));
+        if (!(voidRes && voidRes.status === 204)) failed = true;
+        else ledgerOut.releasedCents += c.disputed.amountCents;
       }
-      void cap1;
     } else {
       var capOrder = step('Capture order', { method: 'POST', path: '/v2/checkout/orders/' + order.id + '/capture', headers: jsonHeaders('capture-order:' + order.id), body: null }, sb.captureOrder(order.id));
-      var capUnits = capOrder.body.purchase_units;
-      var disputedCap = capUnits[disputedIdx].payments.captures[0];
-      ledgerOut.capturedCents += c.milestones[0].amountCents + split.captureCents;
-      if (split.refundCents > 0) {
-        var refReq = buildRefundRequest(disputedCap.id, split.refundCents, 'Tribunal ruling refund');
-        step('Refund ruling amount', refReq, sb.refundCapture(disputedCap.id, refReq.body));
-        ledgerOut.refundedCents += split.refundCents;
+      var capUnits = ok(capOrder) ? capOrder.body.purchase_units : null;
+      var disputedCap = capUnits && capUnits[disputedIdx].payments && capUnits[disputedIdx].payments.captures[0];
+      if (!disputedCap) failed = true;
+      else {
+        // A CAPTURE-intent order sweeps every purchase unit: milestone M3's
+        // funds are captured but undisbursed while its milestone is pending.
+        ledgerOut.capturedCents += c.milestones[0].amountCents + split.captureCents;
+        ledgerOut.capturedPendingCents = c.milestones.reduce(function (a, m, i) { return a + (i !== 0 && i !== disputedIdx ? m.amountCents : 0); }, 0);
+        if (split.refundCents > 0) {
+          var refReq = buildRefundRequest(disputedCap.id, split.refundCents, 'Tribunal ruling refund');
+          var refRes = step('Refund ruling amount', refReq, sb.refundCapture(disputedCap.id, refReq.body));
+          if (!ok(refRes)) failed = true;
+          else ledgerOut.refundedCents += split.refundCents;
+        }
+        capturedUnitId = disputedCap.id;
       }
-      capturedUnitId = disputedCap.id;
     }
 
-    if (split.captureCents > 0) {
+    if (!failed && split.captureCents > 0) {
       var payReq = buildPayoutRequest(c, split.captureCents, 'ruling');
-      step('Pay seller', payReq, sb.createPayout(payReq.body));
-      ledgerOut.feeCents = platformFee(split.captureCents);
-      ledgerOut.payoutCents = split.captureCents - ledgerOut.feeCents;
+      var payRes = step('Pay seller', payReq, sb.createPayout(payReq.body));
+      if (!ok(payRes)) failed = true;
+      else {
+        ledgerOut.feeCents = platformFee(split.captureCents);
+        ledgerOut.payoutCents = split.captureCents - ledgerOut.feeCents;
+      }
     }
-    return { sandbox: sb, steps: steps, split: split, totals: ledgerOut, capturedUnitId: capturedUnitId };
+    return { sandbox: sb, steps: steps, split: split, totals: ledgerOut, capturedUnitId: capturedUnitId, failed: failed || undefined };
   }
 
   // Live mode. Only the PayPal sandbox host is ever allowed; the token is supplied by the user at runtime.
   function executeRequest(req, opts) {
+    if (!req || typeof req.path !== 'string' || !req.method) return Promise.resolve({ ok: false, reason: 'bad-request' });
     var o = opts || {};
     var base = o.base || SANDBOX_BASE;
     if (base !== SANDBOX_BASE) return Promise.resolve({ ok: false, reason: 'sandbox-only' });
@@ -756,9 +850,11 @@
 
   function scoreRuling(c, ruling, ctx) {
     var truth = convene(c).settlement;
-    var errorBps = Math.abs(ruling.captureBps - truth.captureBps);
+    var r = ruling || {};
+    var rb = Number.isFinite(r.captureBps) ? Math.max(0, Math.min(10000, Math.round(r.captureBps))) : 0;
+    var errorBps = Math.abs(rb - truth.captureBps);
     var accuracy = Math.max(0, Math.round(1000 - errorBps / 2));
-    var picked = ruling.flags || [];
+    var picked = Array.isArray(r.flags) ? Array.from(new Set(r.flags)) : [];
     var hits = picked.filter(function (f) { return truth.flags.indexOf(f) !== -1; });
     var falsePos = picked.filter(function (f) { return truth.flags.indexOf(f) === -1; });
     var missed = truth.flags.filter(function (f) { return picked.indexOf(f) === -1; });
@@ -788,6 +884,8 @@
   ];
 
   function buildLedger(c, sessionRun, convened, ruling) {
+    if (!c || !Array.isArray(c.milestones)) return [];
+    var dId = c.disputed && c.disputed.id ? c.disputed.id : 'M?';
     var rows = [];
     function push(time, type, actor, milestone, amountCents, status, ref) {
       rows.push({ seq: rows.length + 1, time: time, type: type, actor: actor, milestone: milestone, amount: amountCents === null ? '' : fmtCents(amountCents), status: status, ref: ref });
@@ -795,24 +893,39 @@
     c.milestones.forEach(function (m, i) {
       push('2026-09-01T09:00:00Z', 'MILESTONE', 'Contract', m.id, m.amountCents, i === c.disputedIndex ? 'DISPUTED' : (i < c.disputedIndex ? 'RELEASED' : 'PENDING'), m.title);
     });
-    c.log.forEach(function (e) {
-      push(e.t, e.kind === 'claim' ? 'DISPUTE' : 'EVIDENCE', e.party, c.disputed.id, null, e.kind.toUpperCase(), e.text);
+    (Array.isArray(c.log) ? c.log : []).forEach(function (e) {
+      push(e.t, e.kind === 'claim' ? 'DISPUTE' : 'EVIDENCE', e.party, dId, null, String(e.kind || 'event').toUpperCase(), e.text);
     });
     if (convened) {
-      convened.trace.forEach(function (t) { push('tribunal', 'AGENT', t.agent, c.disputed.id, null, 'OK', t.tool); });
+      convened.trace.forEach(function (t) { push('tribunal', 'AGENT', t.agent, dId, null, 'OK', t.tool); });
     }
-    if (ruling) push('ruling', 'RULING', 'Arbiter', c.disputed.id, null, 'FILED', 'capture ' + ruling.captureBps + ' bps, refund ' + (10000 - ruling.captureBps) + ' bps');
+    if (ruling) push('ruling', 'RULING', 'Arbiter', dId, null, 'FILED', 'capture ' + ruling.captureBps + ' bps, refund ' + (10000 - ruling.captureBps) + ' bps');
     if (sessionRun) {
       sessionRun.steps.forEach(function (s) {
-        var b = s.response.body || {};
+        var b = (s.response && s.response.body) || {};
         var amt = null;
-        if (s.request.body && s.request.body.amount) amt = toCents(s.request.body.amount.value);
-        if (s.request.body && s.request.body.items) amt = toCents(s.request.body.items[0].amount.value);
-        push(b.create_time || 'sandbox', 'PAYPAL', s.label, c.disputed.id, amt, s.response.status + (b.status ? ' ' + b.status : ''), b.id || (b.batch_header && b.batch_header.payout_batch_id) || s.request.path);
+        try {
+          if (s.request && s.request.body && s.request.body.amount) amt = toCents(s.request.body.amount.value);
+          if (s.request && s.request.body && s.request.body.items && s.request.body.items[0]) amt = toCents(s.request.body.items[0].amount.value);
+        } catch (e) { amt = null; }
+        push(b.create_time || 'sandbox', 'PAYPAL', s.label, dId, amt, (s.response ? s.response.status : '?') + (b.status ? ' ' + b.status : ''), b.id || (b.batch_header && b.batch_header.payout_batch_id) || (s.request && s.request.path));
       });
     }
     return rows;
   }
+
+  // Immutable public data: the state table and case evidence cannot be
+  // rewritten by any script that gets hold of the module surface.
+  function deepFreeze(o) {
+    if (o && typeof o === 'object') {
+      Object.getOwnPropertyNames(o).forEach(function (k) { deepFreeze(o[k]); });
+      Object.freeze(o);
+    }
+    return o;
+  }
+  [FLAGS, FLAG_IDS, STATES, LEDGER_COLUMNS].forEach(deepFreeze);
+  deepFreeze(TRANSITIONS);
+  deepFreeze(CASES);
 
   return {
     FLAGS: FLAGS, FLAG_IDS: FLAG_IDS, CASES: CASES, STATES: STATES, TRANSITIONS: TRANSITIONS, LEDGER_COLUMNS: LEDGER_COLUMNS,

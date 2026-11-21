@@ -6,6 +6,7 @@
 <title>EscrowArena, an AI milestone escrow and dispute tribunal game</title>
 <meta name="description" content="Play the arbiter of a milestone escrow dispute. Weigh git diffs, latency traces and SHA-256 manifests with a three-agent AI tribunal, then watch the PayPal sandbox payloads and audit ledger update.">
 <meta name="theme-color" content="#0f1b2d">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data:; font-src 'self' data:; connect-src https://api-m.sandbox.paypal.com; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta property="og:title" content="EscrowArena, an AI milestone escrow tribunal">
 <meta property="og:description" content="A dispute-resolution game with a three-agent tribunal, PayPal Orders v2 payload studio and an AG Grid audit ledger.">
 <meta property="og:type" content="website">
@@ -13,8 +14,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f1b2d'/%3E%3Cpath d='M16 6v20M8 10h16M8 10l-4 9h8zM24 10l-4 9h8z' fill='none' stroke='%23ffd166' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="styles.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/styles/ag-grid.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/styles/ag-theme-quartz.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/styles/ag-grid.css" integrity="sha384-gIsz6JTVbF5eW0CcuAljKL2kOE400G4TjBH3CBtGXjf8BkjmC5x9jp4Y+bYa7HKA" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/styles/ag-theme-quartz.css" integrity="sha384-bH6bJyGdKmdCV+hlDWtv+dVLH5shFT5aKgGRKceh40t3vt171XksCejZ5ebqZVn0" crossorigin="anonymous">
 </head>
 <body>
 <a class="skip" href="#main">Skip to the dispute</a>
@@ -24,7 +25,6 @@
     <svg class="mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M16 6v20M8 10h16M8 10l-4 9h8zM24 10l-4 9h8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
     <div>
       <h1>EscrowArena</h1>
-      <p class="tag">AI milestone escrow, dispute tribunal and PayPal sandbox studio</p>
     </div>
   </div>
 
@@ -121,12 +121,26 @@
 
     <section class="panel" aria-labelledby="h-live">
       <h2 id="h-live">Sandbox connection</h2>
-      <p class="hint-line">Everything runs on a local simulator by default. To send the selected request to the real PayPal sandbox, paste a sandbox bearer token. The token stays in this tab and the live host is limited to the sandbox.</p>
       <label class="field" for="paypal-token"><span>Sandbox bearer token (optional)</span>
         <input id="paypal-token" type="password" autocomplete="off" spellcheck="false" placeholder="paste-your-paypal-sandbox-token">
       </label>
       <button id="btn-live" type="button" class="btn ghost">Send selected request to sandbox</button>
+      <p class="hint-line">Everything runs on a local simulator by default. To send the selected request to the real PayPal sandbox, paste a sandbox bearer token. The token stays in this tab and the live host is limited to the sandbox.</p>
       <p id="live-status" class="live-status" aria-live="polite">Mode: simulated sandbox</p>
+    </section>
+
+    <section class="panel" aria-labelledby="h-verify">
+      <h2 id="h-verify">Verification telemetry</h2>
+      <button id="btn-verify" type="button" class="btn primary">Run all checks</button>
+      <p class="hint-line">Deterministic checks computed in the browser over all six disputes: money reconciliation, SHA-256 manifest audit, tribunal fairness, state transitions and integer basis point boundaries.</p>
+      <div id="verify-chips" class="chips" aria-live="polite"></div>
+      <div id="verify-readout" class="kv-list"></div>
+      <div class="table-wrap"><table id="verify-table" class="ledger-table"><caption class="hint-line">Per case tribunal telemetry</caption></table></div>
+      <div class="actions">
+        <button id="btn-verify-export" type="button" class="btn ghost">Copy verification JSON</button>
+        <button id="btn-verify-download" type="button" class="btn ghost">Download .json</button>
+      </div>
+      <p id="verify-status" class="hint-line" aria-live="polite">Press Run all checks to compute the verification bundle.</p>
     </section>
   </div>
 </main>
@@ -135,8 +149,10 @@
   <p>EscrowArena is a contest entry by Aariv Patel. Parties, evidence and money are invented. No real payment is ever made, and the simulator uses SIM- prefixed identifiers. MIT licensed, source on GitHub under draarivpatel-ui.</p>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/dist/ag-grid-community.min.js" onerror="window.__agGridFailed = true"></script>
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/dist/ag-grid-community.min.js" integrity="sha384-OEiOpwgvTUxOUC72SwfU8zDqZrWBwr0YNPNhovPbjCxdaTD0cLxMHBew/o8zuRln" crossorigin="anonymous"></script>
 <script src="engine.js"></script>
+<script src="analytics.js"></script>
 <script src="app.js"></script>
+<script src="analytics-ui.js"></script>
 </body>
 </html>

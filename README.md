@@ -33,7 +33,7 @@ All rules and money math are in `engine.js`, a dependency-free UMD module.
 
 Money is integer cents and splits are integer basis points. The capture is rounded down to a whole cent and the residual cent goes to the buyer, so capture plus refund always equals the milestone amount.
 
-`app.js` only renders and binds events. `createController(engine, document, options)` accepts any document-like object, which is how the tests drive it without a browser.
+`app.js` only renders and binds events. `createController(engine, document, options)` accepts any document-like object, which is how the tests drive it without a browser. `analytics.js` and `analytics-ui.js` add the verification layer described above; they attach to the engine and never change a rule or a cent.
 
 ## AG Grid
 
@@ -53,11 +53,29 @@ The audit ledger uses AG Grid Community 32.3.3 loaded from jsDelivr. If the scri
 npm test
 ```
 
-This runs `node --test` with no installs. `tests/engine.test.js` covers hashing, money rounding, the agents, the state machine, the request builders, the simulator and scoring. `tests/dom-smoke.test.js` checks the markup, drives the controller on a small fake DOM in both grid modes, and scans every file for dashes, emoji, uppercase kickers, credential-shaped strings and private details.
+This runs `node --test` with no installs. 204 passing tests across five suites:
+
+- `tests/engine.test.js`: hashing, money rounding, the agents, the state machine, the request builders, the simulator and scoring.
+- `tests/dom-smoke.test.js`: the markup, the controller on a small fake DOM in both grid modes, and repository scans for dashes, emoji, uppercase kickers, credential-shaped strings and private details.
+- `tests/analytics.test.js`: 28 tests over money reconciliation, the SHA-256 manifest audit checked against Node crypto, tribunal fairness identities, the exhaustive state transition matrix, integer basis point boundaries and the reproducible verification bundle.
+- `tests/compliance.test.js`: 10 tests locking the no-dash, no-disclosure, no-private-detail and doc consistency rules.
+- `tests/hardening.test.js`: 35 adversarial tests locking input validation, NaN and Infinity rulings, sandbox double-capture and over-refund guards, malformed amount handling, money conservation invariants, CSP markup and accessibility checks.
+
+## Analytics and verification telemetry
+
+`analytics.js` is a dependency-free UMD analysis layer over `engine.js`. It runs five deterministic computations:
+
+- **Money reconciliation**: every ruling split over all six disputes, verifying capture plus refund equals the milestone amount, payout plus fee equals capture, and the simulator ledger totals reconcile.
+- **SHA-256 manifest audit**: recompute every approved and delivered artifact hash and confirm the stored hashes match. The tests cross-check the pure JS implementation against Node crypto.
+- **Tribunal fairness**: recompute spec coverage, measured p95, the quality factor identity and the flags for each case, and confirm the tribunal own ruling scores the maximum.
+- **State transition matrix**: drive all 35 state and event pairs and verify valid events land in the right state while invalid ones are rejected.
+- **Basis point boundaries**: prove the floor-to-cent rule and the buyer residual cent over all 10,001 integer basis point values.
+
+`analytics-ui.js` renders these results in a Verification telemetry panel with a pass or fail chip per check, a readout, a per-case table, and copy and download controls for the full verification bundle. Every number is computed in the browser at render time.
 
 ## Verification & limits
 
-All cases, evidence and agent logic are deterministic and tested locally. Aariv Patel authored the project and owns the repository. Playtesting is verified through the automated test suite.
+All cases, evidence and agent logic are deterministic and tested locally. The verification bundle reports eight self checks and makes no network request. No live PayPal call was made while building or testing this project. Aariv Patel authored the project and owns the repository. Playtesting is verified through the automated test suite.
 
 ## License
 
