@@ -53,13 +53,15 @@ The audit ledger uses AG Grid Community 32.3.3 loaded from jsDelivr. If the scri
 npm test
 ```
 
-This runs `node --test` with no installs. 204 passing tests across five suites:
+This runs `node --test` with no installs. 489 passing tests across seven suites:
 
 - `tests/engine.test.js`: hashing, money rounding, the agents, the state machine, the request builders, the simulator and scoring.
 - `tests/dom-smoke.test.js`: the markup, the controller on a small fake DOM in both grid modes, and repository scans for dashes, emoji, uppercase kickers, credential-shaped strings and private details.
 - `tests/analytics.test.js`: 28 tests over money reconciliation, the SHA-256 manifest audit checked against Node crypto, tribunal fairness identities, the exhaustive state transition matrix, integer basis point boundaries and the reproducible verification bundle.
 - `tests/compliance.test.js`: 10 tests locking the no-dash, no-disclosure, no-private-detail and doc consistency rules.
 - `tests/hardening.test.js`: 35 adversarial tests locking input validation, NaN and Infinity rulings, sandbox double-capture and over-refund guards, malformed amount handling, money conservation invariants, CSP markup and accessibility checks.
+- `tests/mechanism.test.js`: 235 tests over the mechanism lab: exact integer-cent conservation in every protocol and attack cell across the bond grid, payoff identities, ROI sign conventions, deterrence thresholds and windows, timeout-bounded liveness, the checksummed audit exports and the strict bookmark codec.
+- `tests/mechanism-ui.test.js`: 50 tests over the lab markup, the CSP and script order, and the lab controller on the fake DOM: matrix selection, the SVG threshold chart, controls, the self-test panel, exports and bookmarking.
 
 ## Analytics and verification telemetry
 
@@ -72,6 +74,16 @@ This runs `node --test` with no installs. 204 passing tests across five suites:
 - **Basis point boundaries**: prove the floor-to-cent rule and the buyer residual cent over all 10,001 integer basis point values.
 
 `analytics-ui.js` renders these results in a Verification telemetry panel with a pass or fail chip per check, a readout, a per-case table, and copy and download controls for the full verification bundle. Every number is computed in the browser at render time.
+
+## Adversarial mechanism lab
+
+`mechanism-lab.js` is a deterministic game-theory workbench that stresses five escrow protocols (single-release trust, milestone partial-release, symmetric collateral, a Schelling-point stake-slashing jury, and a time-locked release with an evidence bond) against six adversarial behaviors (honest delivery, buyer griefing, seller ghosting, bribed arbiter collusion, Sybil jury packing and timeout stalling). Every cell of the five by six matrix keeps an explicit escrow pot ledger in integer cents, so value conservation (buyer + seller + arbiter + slashed equals totalLocked) is proved per cell rather than assumed.
+
+From those ledgers the lab derives the honest-strategy payoff dominance margin, griefing attack ROI (negative means economically deterred), the deterrence threshold over a collateral bond sweep from 0 to 150 percent of contract, deterrence windows where a cheap attack re-emerges, and the minimum bond ratio at which a protocol becomes incentive compatible. The headline result: only the stake-slashing jury reaches incentive compatibility, at a 92.5 percent pool bond, while the single corruptible arbiter fails everywhere.
+
+`mechanism-ui.js` renders the interactive payoff matrix, a bond-threshold sensitivity chart (five attack curves, the deterrence boundary and exact threshold markers), a per-protocol scoreboard, and the selected cell's escrow ledger. A Run Self-Tests panel proves twelve properties live in the browser: FIPS 180-4 SHA-256 known-answer vectors, conservation over 270 grid cells, payoff identities, threshold monotonicity or honestly reported windows, timeout-bounded liveness, CSV formula-injection escaping, tamper detection, strict `#escrow=` bookmark round-trips, ROI sign conventions and matrix shape. JSON, CSV and Markdown audit exports carry an unkeyed SHA-256 tamper-detection digest (not a signature) that the page can replay-verify.
+
+`headless-audit.mjs` is a zero-dependency Node script that drives a real headless Chromium over the DevTools protocol at 1440x900 and 390x844. The last run reported 31 checks, all passing: zero console errors, zero page errors, zero failed requests, external hosts limited to the pinned jsDelivr CDN, zero horizontal page overflow, and the matrix scrolling inside its own wrap on the phone viewport.
 
 ## Verification & limits
 

@@ -246,3 +246,64 @@ legend { color: var(--muted); padding: 0 6px; font-size: 0.82rem; }
 #verify-table th, #verify-table td { padding: 5px 9px; border-bottom: 1px solid var(--line); text-align: left; }
 #verify-table th { background: #f1f4fb; position: sticky; top: 0; }
 #verify-table td.num { text-align: right; font-family: var(--mono); }
+
+/* Adversarial mechanism lab */
+.panel.lab { grid-column: 1 / -1; }
+.lab-controls {
+  display: grid;
+  grid-template-columns: minmax(220px, 340px) 1fr;
+  gap: 14px 24px;
+  align-items: end;
+  margin-bottom: 14px;
+}
+.lab-bond-field { font-size: 0.85rem; color: var(--ink-2); }
+.lab-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.lab-col { min-width: 0; display: grid; gap: 10px; }
+.lab-col h3, .lab-audit h3 { color: var(--ink-2); }
+.lab-matrix-wrap { max-height: none; }
+.lab-table { font-size: 0.78rem; }
+.lab-table th, .lab-table td { padding: 6px 7px; }
+.mcell {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #f8faff;
+  font: inherit;
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.mcell.pos { border-color: #e3b6bd; background: var(--red-bg); color: #6c1420; }
+.mcell.det { border-color: #a8d8c3; background: var(--green-bg); color: #0a4a35; }
+.mcell.base { border-color: var(--line); background: #eef2f8; color: var(--muted); }
+.mcell.sel { outline: 3px solid #ff9f1c; outline-offset: 1px; }
+.conserve { font-family: var(--mono); font-size: 0.78rem; color: var(--green); margin: 10px 0 0; }
+.lab-notes { margin: 8px 0 0; padding-left: 18px; font-size: 0.84rem; color: var(--ink-2); display: grid; gap: 4px; }
+.lab-ledger { font-size: 0.78rem; }
+.lab-ledger td.num, .lab-ledger th.num { text-align: right; font-family: var(--mono); }
+#lab-chart svg { width: 100%; height: auto; display: block; border: 1px solid var(--line); border-radius: 10px; background: #fbfcff; }
+.chart-grid { stroke: #e6ebf5; stroke-width: 1; }
+.chart-zero { stroke: var(--ink); stroke-width: 1.6; }
+.chart-detzone { fill: #e3f6ee; opacity: 0.55; }
+.chart-cursor { stroke: var(--gold); stroke-width: 2; stroke-dasharray: 4 4; }
+.chart-line { fill: none; stroke-width: 2; }
+.chart-line.leverless { opacity: 0.65; }
+.chart-cross { fill: #fff; stroke-width: 2; }
+.chart-tick { font-size: 10px; fill: var(--muted); font-family: var(--mono); }
+.chart-axis { font-size: 11px; fill: var(--ink-2); }
+.chart-threshold { font-size: 10px; font-family: var(--mono); font-weight: 600; }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 8px; font-size: 0.78rem; color: var(--ink-2); }
+.chart-key { display: inline-flex; align-items: center; gap: 6px; }
+.chart-dot { width: 10px; height: 10px; border-radius: 999px; display: inline-block; }
+.lab-digest { font-family: var(--mono); font-size: 0.74rem; color: var(--ink-2); margin: 12px 0 6px; word-break: break-all; }
+.lab-audit { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 14px; }
+.lab-audit .chips { margin: 10px 0; }
+
+@media (max-width: 1150px) {
+  .lab-controls { grid-template-columns: 1fr; }
+  .lab-grid { grid-template-columns: minmax(0, 1fr); }
+}

@@ -143,6 +143,48 @@
       <p id="verify-status" class="hint-line" aria-live="polite">Press Run all checks to compute the verification bundle.</p>
     </section>
   </div>
+
+  <section class="panel lab" aria-labelledby="h-lab">
+    <h2 id="h-lab">Adversarial mechanism lab</h2>
+    <div class="lab-controls">
+      <label class="field" for="lab-contract"><span>Disputed contract</span>
+        <select id="lab-contract"></select>
+      </label>
+      <label class="slider lab-bond-field" for="lab-bond"><span>Collateral bond ratio <b id="lab-bond-readout"></b></span>
+        <input id="lab-bond" type="range" min="0" max="15000" step="50" value="5000">
+      </label>
+    </div>
+    <div class="lab-grid">
+      <div class="lab-col">
+        <h3>Payoff matrix</h3>
+        <div class="table-wrap lab-matrix-wrap"><table id="lab-matrix" class="lab-table"></table></div>
+        <div id="lab-detail"></div>
+      </div>
+      <div class="lab-col">
+        <h3>Bond threshold sensitivity</h3>
+        <div id="lab-chart"></div>
+        <h3>Protocol scoreboard</h3>
+        <div class="table-wrap"><table id="lab-score" class="lab-table"></table></div>
+      </div>
+    </div>
+    <div class="lab-audit">
+      <h3>Audit and self-tests</h3>
+      <div class="actions">
+        <button id="btn-lab-tests" type="button" class="btn primary">Run Self-Tests</button>
+        <button id="btn-lab-copy" type="button" class="btn ghost">Copy audit JSON</button>
+        <button id="btn-lab-json" type="button" class="btn ghost">Download .json</button>
+        <button id="btn-lab-csv" type="button" class="btn ghost">Download .csv</button>
+        <button id="btn-lab-md" type="button" class="btn ghost">Download .md</button>
+        <button id="btn-lab-bookmark" type="button" class="btn ghost">Bookmark this state</button>
+        <button id="btn-lab-verify" type="button" class="btn ghost">Re-verify checksum</button>
+      </div>
+      <p id="lab-digest" class="lab-digest" aria-live="polite"></p>
+      <div id="lab-test-chips" class="chips" aria-live="polite"></div>
+      <p id="lab-test-status" class="hint-line" aria-live="polite"></p>
+      <p id="lab-status" class="live-status" aria-live="polite"></p>
+      <p class="hint-line">Payoffs are a deterministic integer-cent model, not measurements of a live system. The naive arbiter cannot verify delivery and splits disputed pots 50/50 after its fee; the evidence arbiter rules correctly but is one corruptible principal; the jury assumes honest seats hold the majority and counts seats sharing a funding source as one vote; the timelock trades correctness for a liveness bound. The checksum is an unkeyed SHA-256 tamper-detection digest, not a signature and not authentication. No network request is made.</p>
+    </div>
+  </section>
 </main>
 
 <footer class="foot">
@@ -152,7 +194,9 @@
 <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/dist/ag-grid-community.min.js" integrity="sha384-OEiOpwgvTUxOUC72SwfU8zDqZrWBwr0YNPNhovPbjCxdaTD0cLxMHBew/o8zuRln" crossorigin="anonymous"></script>
 <script src="engine.js"></script>
 <script src="analytics.js"></script>
+<script src="mechanism-lab.js"></script>
 <script src="app.js"></script>
 <script src="analytics-ui.js"></script>
+<script src="mechanism-ui.js"></script>
 </body>
 </html>

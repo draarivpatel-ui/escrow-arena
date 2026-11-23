@@ -19,7 +19,16 @@ Written 2026-10-26 (local clock, checked with `date`).
 - The AG Grid script and both stylesheets exist at the pinned jsDelivr URLs (checked with HTTP requests on the build date). 
 - One headless Chrome screenshot at 1400px wide (throwaway profile) after applying the tribunal ruling and filing it showed AG Grid Community mounted with its filter icons, the score banner, the three agent cards and the payload inspector. Only that first dispute in that state was looked at; the other five disputes, the HTML fallback table (grid unavailable) and the narrow layout were not.
 
+## Mechanism lab upgrade (2026-11-22)
+
+- `npm test` now reports 489 tests, 489 pass, 0 fail (was 204). The two new suites are `tests/mechanism.test.js` (235) and `tests/mechanism-ui.test.js` (50).
+- `headless-audit.mjs` drove a real chrome-headless-shell over the DevTools protocol at 1440x900 and 390x844: 31 checks, all passing, zero console errors, zero page errors, zero failed requests, zero horizontal overflow, external requests limited to the pinned jsDelivr CDN. On the phone viewport the payoff matrix scrolls 317 px inside its own wrap while the page itself does not overflow.
+- Every cell of the lab matrix was checked for `buyer + seller + arbiter + slashed == totalLocked` on a ten-point bond grid, including override runs with a fractional bribe risk factor.
+- The Schelling jury bribery deterrence threshold was verified directly: profit +600 at 92.0 percent pool bond, -1000 at 92.5 percent.
+- The timelock ghost deterrence window was verified directly: defended at 50 percent bond (profit -111000), undefended at 100 percent (profit +159000, verdict auto-release).
+
 ## What is not verified
 
 - Live PayPal sandbox behaviour, see the README.
-- Narrow phone layouts and browsers other than headless Chrome.
+- Browsers other than the headless Chromium build used by the audit.
+- The payoff model is a stated simplification: the naive arbiter cannot verify delivery, the evidence arbiter is a single corruptible principal, the jury assumes honest-seat majority with same-funder dedup, and the timelock trades correctness for a liveness bound. Lab numbers are deterministic outputs of that model, not measurements of any live system.
