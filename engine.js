@@ -332,7 +332,7 @@
   /* ---------- tribunal agents ---------- */
 
   function p95(samples) {
-    var s = (Array.isArray(samples) ? samples : []).filter(function (x) { return Number.isFinite(x); }).sort(function (a, b) { return a - b; });
+    var s = (Array.isArray(samples) ? samples : []).filter(function (x) { return Number.isFinite(x) && x >= 0; }).sort(function (a, b) { return a - b; });
     if (!s.length) return 0;
     return s[Math.max(0, Math.ceil(0.95 * s.length) - 1)];
   }
@@ -355,8 +355,8 @@
     reqs.forEach(function (r) { reqPaths(r).forEach(function (p) { mappedPaths[p] = true; }); });
     var weightOf = function (r) { var w = r.weight; return Number.isFinite(w) && w > 0 ? w : 0; };
     var weightSum = original.reduce(function (a, r) { return a + weightOf(r); }, 0);
-    var addedOf = function (f) { return Number.isFinite(f.added) ? f.added : 0; };
-    var testsOf = function (f) { return Number.isFinite(f.tests) ? f.tests : 0; };
+    var addedOf = function (f) { return Number.isSafeInteger(f.added) && f.added > 0 ? f.added : 0; };
+    var testsOf = function (f) { return Number.isSafeInteger(f.tests) && f.tests > 0 ? f.tests : 0; };
     var perReq = original.map(function (r) {
       var paths = reqPaths(r);
       var hit = paths.filter(function (p) { return files.some(function (f) { return f.path === p && addedOf(f) > 0; }); }).length;
@@ -388,9 +388,11 @@
     var ratio = validSla ? measured / tel.slaP95Ms : null;
     var slaMet = samples.length === 0 ? true : (validSla && measured <= tel.slaP95Ms);
     var rows = (Array.isArray(c.manifest) ? c.manifest : []).filter(function (m) { return m && typeof m === 'object'; }).map(function (m) {
-      var recomputedApproved = sha256Hex(m.approvedContent);
-      var recomputedDelivered = sha256Hex(m.deliveredContent);
-      return { path: m.path, approvedSha: recomputedApproved, deliveredSha: recomputedDelivered, match: recomputedApproved === recomputedDelivered };
+      var approvedValid = typeof m.approvedContent === 'string';
+      var deliveredValid = typeof m.deliveredContent === 'string';
+      var recomputedApproved = approvedValid ? sha256Hex(m.approvedContent) : null;
+      var recomputedDelivered = deliveredValid ? sha256Hex(m.deliveredContent) : null;
+      return { path: m.path, approvedSha: recomputedApproved, deliveredSha: recomputedDelivered, match: approvedValid && deliveredValid && recomputedApproved === recomputedDelivered };
     });
     var mismatches = rows.filter(function (r) { return !r.match; });
     return {

@@ -32,3 +32,10 @@ Written 2026-10-26 (local clock, checked with `date`).
 - Live PayPal sandbox behaviour, see the README.
 - Browsers other than the headless Chromium build used by the audit.
 - The payoff model is a stated simplification: the naive arbiter cannot verify delivery, the evidence arbiter is a single corruptible principal, the jury assumes honest-seat majority with same-funder dedup, and the timelock trades correctness for a liveness bound. Lab numbers are deterministic outputs of that model, not measurements of any live system.
+
+
+## Boundary hardening pass (2026-11-24)
+
+- `node --test` now reports 495 tests, 495 pass, 0 fail (was 489). Three engine hardening tests and three mechanism boundary tests were added before the fixes.
+- Missing artifact content no longer verifies as a matching hash, negative latency samples are rejected as malformed evidence, and negative diff line or test counts cannot poison spec audit totals.
+- Mechanism CSV export now neutralizes formula triggers after leading whitespace, bookmarks require exactly the four state fields, and structural counts that act as divisors or panel sizes clamp to safe positive integers.

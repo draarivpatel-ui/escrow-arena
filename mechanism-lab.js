@@ -109,6 +109,9 @@
     }
     p.contractCents = Math.max(1, Math.round(p.contractCents));
     p.maxBondBps = Math.max(0, Math.min(1000000, Math.round(p.maxBondBps)));
+    ['trancheCount', 'jurorCount', 'appealJurorCount', 'poolSizeSeats'].forEach(function (k) {
+      p[k] = Math.max(1, Math.round(p[k]));
+    });
     return p;
   }
 
@@ -690,7 +693,7 @@
   // single quote so a hostile label can never execute as a formula.
   function csvCell(v) {
     var s = v === null || v === undefined ? '' : String(v);
-    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    if (/^[\s]*[=+\-@\t\r]/.test(s)) s = "'" + s;
     if (/[",\n\r]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
     return s;
   }
@@ -792,7 +795,9 @@
     if (!text) return null;
     var obj;
     try { obj = JSON.parse(text); } catch (e) { return null; }
-    if (!obj || typeof obj !== 'object') return null;
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return null;
+    var keys = Object.keys(obj).sort();
+    if (keys.join(',') !== 'a,c,p,r') return null;
     var state = {
       contractCents: Math.round(Number(obj.c)),
       bondBps: Math.round(Number(obj.r)),

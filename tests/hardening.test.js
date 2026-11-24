@@ -610,3 +610,34 @@ test('PASS2 23: CDN assets carry SRI and the CSP only loosens style-src for the 
   assert.match(html, /script-src 'self' https:\/\/cdn\.jsdelivr\.net/);
   assert.match(html, /object-src 'none'; base-uri 'none'; form-action 'none'/);
 });
+
+test('PASS3 01: artifact hashes never treat missing content as verified', () => {
+  const c = {
+    telemetry: { slaP95Ms: 500, samples: [100] },
+    manifest: [{ path: 'dist/missing.tar' }]
+  };
+  const v = E.verifyTelemetry(c);
+  assert.equal(v.mismatches, 1);
+  assert.equal(v.tampered, true);
+  assert.equal(v.hashScoreBps, 0);
+  assert.equal(v.manifest[0].match, false);
+});
+
+test('PASS3 02: negative latency samples are malformed evidence, not measurements', () => {
+  const samples = Array(95).fill(-100).concat([10, 20, 30, 40, 50]);
+  assert.equal(E.p95(samples), 50);
+});
+
+test('PASS3 03: negative diff line and test counts cannot poison spec audit totals', () => {
+  const audit = E.auditSpec({
+    requirements: [{ id: 'R1', text: 'Required API', weight: 1, paths: ['src/a.js'] }],
+    diff: { files: [
+      { path: 'src/a.js', added: 10, removed: 0, tests: -7 },
+      { path: 'src/extra.js', added: -20, removed: 0, tests: 3 }
+    ] }
+  });
+  assert.equal(audit.totalAdded, 10);
+  assert.equal(audit.testsAdded, 3);
+  assert.equal(audit.unmappedAdded, 0);
+  assert.equal(audit.coverageBps, 10000);
+});

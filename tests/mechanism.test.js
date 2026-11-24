@@ -714,3 +714,30 @@ test('MECH 70: a bigger jury pool dilutes sybil packing without breaking conserv
   const small = M.simulateCell('schelling-jury', 'sybil-jury', 5000);
   assert.ok(Math.abs(c.attackerProfitCents) < Math.abs(small.attackerProfitCents));
 });
+
+test('MECH 71: csv cells are neutralized even when whitespace precedes a formula', () => {
+  assert.equal(M.csvCell(' =1+1'), "' =1+1");
+  assert.equal(M.csvCell('  @sum'), "'  @sum");
+  assert.equal(M.csvCell('\n=1+1'), "\"'\n=1+1\"");
+});
+
+test('MECH 72: bookmarks reject extra or missing fields even when values decode cleanly', () => {
+  const base = { c: 300000, r: 5000, p: 'single-release', a: 'honest' };
+  const extra = M.BOOKMARK_PREFIX + M.b64encode(JSON.stringify({ ...base, x: 1 }));
+  const missing = M.BOOKMARK_PREFIX + M.b64encode(JSON.stringify({ c: 300000, r: 5000, p: 'single-release' }));
+  const wrongVersionShape = M.BOOKMARK_PREFIX + M.b64encode(JSON.stringify(['c', 300000]));
+  assert.equal(M.decodeBookmark(extra), null);
+  assert.equal(M.decodeBookmark(missing), null);
+  assert.equal(M.decodeBookmark(wrongVersionShape), null);
+});
+
+test('MECH 73: integer structural parameters cannot be forced below one', () => {
+  const p = M.params({ poolSizeSeats: 0, jurorCount: 0, appealJurorCount: -2, trancheCount: 0 });
+  for (const key of ['poolSizeSeats', 'jurorCount', 'appealJurorCount', 'trancheCount']) {
+    assert.equal(Number.isSafeInteger(p[key]), true, key);
+    assert.ok(p[key] >= 1, key + '=' + p[key]);
+  }
+  const c = M.simulateCell('schelling-jury', 'sybil-jury', 5000, { poolSizeSeats: 0 });
+  assert.equal(Number.isFinite(c.totalLocked), true);
+  assert.equal(c.receipts.buyer + c.receipts.seller + c.receipts.arbiter + c.receipts.slashed, c.totalLocked);
+});
