@@ -152,8 +152,8 @@ th { color: var(--muted); font-weight: 600; font-size: 0.78rem; }
 .kv { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px dotted var(--line); padding: 2px 0; }
 .kv b { font-family: var(--mono); font-weight: 600; }
 
-.slider { display: grid; gap: 8px; font-size: 0.85rem; color: var(--ink-2); }
-input[type="range"] { width: 100%; accent-color: var(--indigo); min-height: 44px; }
+.slider { display: grid; gap: 8px; min-width: 0; max-width: 100%; font-size: 0.85rem; color: var(--ink-2); }
+input[type="range"] { display: block; width: calc(100% - 2px); max-width: calc(100% - 2px); accent-color: var(--indigo); min-height: 44px; }
 .split { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 8px 0 14px; }
 .split div { padding: 10px 12px; border-radius: 12px; }
 .split .cap { background: var(--green-bg); color: #0a4a35; }
@@ -228,10 +228,6 @@ legend { color: var(--muted); padding: 0 6px; font-size: 0.82rem; }
   .board { grid-template-columns: minmax(0, 1fr); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; animation: none !important; }
-}
-
 /* Verification telemetry additions */
 .kv-list { display: grid; gap: 6px; margin: 12px 0; }
 .kv-list .kv { border-bottom: 1px dotted var(--line); padding: 3px 0; font-size: 0.82rem; }
@@ -254,9 +250,10 @@ legend { color: var(--muted); padding: 0 6px; font-size: 0.82rem; }
   grid-template-columns: minmax(220px, 340px) 1fr;
   gap: 14px 24px;
   align-items: end;
+  min-width: 0;
   margin-bottom: 14px;
 }
-.lab-bond-field { font-size: 0.85rem; color: var(--ink-2); }
+.lab-bond-field { min-width: 0; max-width: 100%; font-size: 0.85rem; color: var(--ink-2); }
 .lab-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 18px; align-items: start; }
 .lab-col { min-width: 0; display: grid; gap: 10px; }
 .lab-col h3, .lab-audit h3 { color: var(--ink-2); }
@@ -306,4 +303,8 @@ legend { color: var(--muted); padding: 0 6px; font-size: 0.82rem; }
 @media (max-width: 1150px) {
   .lab-controls { grid-template-columns: 1fr; }
   .lab-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
 }

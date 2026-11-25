@@ -135,7 +135,7 @@
       <p class="hint-line">Deterministic checks computed in the browser over all six disputes: money reconciliation, SHA-256 manifest audit, tribunal fairness, state transitions and integer basis point boundaries.</p>
       <div id="verify-chips" class="chips" aria-live="polite"></div>
       <div id="verify-readout" class="kv-list"></div>
-      <div class="table-wrap"><table id="verify-table" class="ledger-table"><caption class="hint-line">Per case tribunal telemetry</caption></table></div>
+      <div class="table-wrap" tabindex="0"><table id="verify-table" class="ledger-table"><caption class="hint-line">Per case tribunal telemetry</caption></table></div>
       <div class="actions">
         <button id="btn-verify-export" type="button" class="btn ghost">Copy verification JSON</button>
         <button id="btn-verify-download" type="button" class="btn ghost">Download .json</button>
@@ -164,7 +164,7 @@
         <h3>Bond threshold sensitivity</h3>
         <div id="lab-chart"></div>
         <h3>Protocol scoreboard</h3>
-        <div class="table-wrap"><table id="lab-score" class="lab-table"></table></div>
+        <div class="table-wrap" tabindex="0" aria-label="Protocol scoreboard, scroll to see all columns"><table id="lab-score" class="lab-table"></table></div>
       </div>
     </div>
     <div class="lab-audit">
