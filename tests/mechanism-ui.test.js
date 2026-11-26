@@ -50,8 +50,8 @@ test('LAB 03: the lab scripts load after the engine and before nothing else move
   assert.ok(html.indexOf('analytics-ui.js') < html.indexOf('mechanism-ui.js'));
 });
 
-test('LAB 04: the content security policy is byte-identical to the pinned policy', () => {
-  assert.match(html, /content="default-src 'self'; script-src 'self' https:\/\/cdn\.jsdelivr\.net; style-src 'self' 'unsafe-inline' https:\/\/cdn\.jsdelivr\.net; img-src 'self' data:; font-src 'self' data:; connect-src https:\/\/api-m\.sandbox\.paypal\.com; object-src 'none'; base-uri 'none'; form-action 'none'"/);
+test('LAB 04: the content security policy is byte-identical to the pinned self-only policy', () => {
+  assert.match(html, /content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src https:\/\/api-m\.sandbox\.paypal\.com; object-src 'none'; base-uri 'none'; form-action 'none'"/);
 });
 
 test('LAB 05: the Run Self-Tests button and six export controls carry exact labels', () => {
@@ -80,7 +80,7 @@ test('LAB 07: the lab disclosures state the model and checksum boundaries plainl
 
 test('LAB 08: the lab introduces no new external hosts or inline handlers', () => {
   const hosts = new Set([...html.matchAll(/https:\/\/([a-z0-9.-]+)\//g)].map((m) => m[1]));
-  ['cdn.jsdelivr.net', 'aariv.me', 'www.w3.org', 'api-m.sandbox.paypal.com'].forEach((h) => hosts.delete(h));
+  ['aariv.me', 'www.w3.org', 'api-m.sandbox.paypal.com'].forEach((h) => hosts.delete(h));
   assert.deepEqual([...hosts], []);
   assert.doesNotMatch(html, /\son(error|click|load)=/);
 });

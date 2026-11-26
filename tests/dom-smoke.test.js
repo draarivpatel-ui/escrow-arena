@@ -65,18 +65,23 @@ test('DOM 04: the three judge shortcut buttons have their exact labels', () => {
   assert.match(html, /id="btn-sandbox"[^>]*>Run Sandbox Payloads</);
 });
 
-test('DOM 05: AG Grid Community loads from a pinned CDN version with no inline handlers so the CSP holds', () => {
-  assert.match(html, /<script src="https:\/\/cdn\.jsdelivr\.net\/npm\/ag-grid-community@32\.3\.3\/dist\/ag-grid-community\.min\.js" integrity="sha384-[A-Za-z0-9+/=]+" crossorigin="anonymous"><\/script>/);
+test('DOM 05: AG Grid Community loads from local vendored assets with no inline handlers', () => {
+  assert.match(html, /<script src="vendor\/ag-grid\/ag-grid-community\.min\.noStyle\.js"><\/script>/);
   assert.doesNotMatch(html, /\son(error|click|load)=/);
-  assert.match(html, /ag-grid-community@32\.3\.3\/styles\/ag-grid\.css/);
-  assert.match(html, /ag-grid-community@32\.3\.3\/styles\/ag-theme-quartz\.css/);
+  assert.match(html, /href="vendor\/ag-grid\/ag-grid\.min\.css"/);
+  assert.match(html, /href="vendor\/ag-grid\/ag-theme-quartz\.min\.css"/);
+  ['vendor/ag-grid/ag-grid-community.min.noStyle.js', 'vendor/ag-grid/ag-grid.min.css', 'vendor/ag-grid/ag-theme-quartz.min.css'].forEach((file) => {
+    assert.ok(fs.existsSync(path.join(root, file)), file);
+  });
 });
 
-test('DOM 06: the grid script loads before the engine and app, and no other CDN is used', () => {
-  assert.ok(html.indexOf('ag-grid-community.min.js') < html.indexOf('engine.js'));
+test('DOM 06: the grid script loads before the engine and app, and no active CDN asset is used', () => {
+  assert.ok(html.indexOf('ag-grid-community.min.noStyle.js') < html.indexOf('engine.js'));
   assert.ok(html.indexOf('engine.js') < html.indexOf('app.js'));
+  const activeRefs = [...html.matchAll(/<(?:script|link|img)\b[^>]*(?:src|href)="([^"]+)"/g)].map((m) => m[1]);
+  assert.equal(activeRefs.some((ref) => /^https?:\/\//.test(ref)), false);
   const hosts = new Set([...html.matchAll(/https:\/\/([a-z0-9.-]+)\//g)].map((m) => m[1]));
-  ['cdn.jsdelivr.net', 'aariv.me', 'www.w3.org'].forEach((h) => hosts.delete(h));
+  ['aariv.me', 'www.w3.org', 'api-m.sandbox.paypal.com'].forEach((h) => hosts.delete(h));
   assert.deepEqual([...hosts], []);
 });
 

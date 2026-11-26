@@ -308,3 +308,11 @@ legend { color: var(--muted); padding: 0 6px; font-size: 0.82rem; }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
+
+@media print {
+  body { background: #fff; color: #111; }
+  .skip, button, input, select, .tabs, .actions { display: none !important; }
+  .panel, .table-wrap, pre { box-shadow: none !important; break-inside: avoid; }
+  .table-wrap, pre { overflow: visible !important; max-height: none !important; white-space: pre-wrap; }
+  a { color: inherit; text-decoration: none; }
+}

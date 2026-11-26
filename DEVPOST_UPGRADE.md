@@ -12,7 +12,7 @@ npm test
 
 Which expands to the bare script `node --test` (unchanged, as the DOM suite requires).
 
-Actual result: **495 tests, 495 pass, 0 fail.**
+Actual result: **496 tests, 496 pass, 0 fail.**
 
 | Suite | Tests | What it locks |
 | --- | --- | --- |
@@ -20,8 +20,8 @@ Actual result: **495 tests, 495 pass, 0 fail.**
 | `tests/dom-smoke.test.js` | 44 | Markup, the controller on a fake DOM in both grid modes, and repository hygiene scans |
 | `tests/analytics.test.js` | 28 | Money reconciliation, SHA-256 audit against Node crypto, tribunal fairness, state matrix, basis point boundaries, verification bundle |
 | `tests/compliance.test.js` | 10 | Zero dashes, zero model attributions, zero private details, docs consistent with the real count, no live call |
-| `tests/hardening.test.js` | 35 | Adversarial inputs: NaN and Infinity rulings, double-capture and over-refund guards, malformed amounts, conservation invariants, CSP and accessibility markup |
-| `tests/mechanism.test.js` | 235 | Integer-cent conservation per matrix cell across the bond grid, payoff identities, ROI sign, deterrence thresholds and windows, liveness bounds, export checksums and codec |
+| `tests/hardening.test.js` | 62 | Adversarial inputs: NaN and Infinity rulings, double-capture and over-refund guards, malformed amounts, conservation invariants, CSP and accessibility markup |
+| `tests/mechanism.test.js` | 238 | Integer-cent conservation per matrix cell across the bond grid, payoff identities, ROI sign, deterrence thresholds and windows, liveness bounds, export checksums and codec |
 | `tests/mechanism-ui.test.js` | 50 | Lab markup, CSP and script order, matrix selection, SVG chart, controls, self-test panel, exports, bookmarking on the fake DOM |
 
 Headless Chromium audit (`node headless-audit.mjs`, real chrome-headless-shell over the DevTools protocol): **31 checks, 31 pass, 0 fail** at 1440x900 and 390x844. Zero console errors, zero page errors, zero failed requests, external hosts limited to the pinned jsDelivr CDN, zero horizontal page overflow, and the payoff matrix scrolls inside its own wrap (317 px) rather than overflowing the page on the phone viewport. Screenshots reviewed at both sizes.
@@ -58,7 +58,7 @@ Every figure on screen is computed at render time. The verification bundle repor
 
 The upgrade adds a verification layer built from real computations over the whole case set. A money reconciliation sweep checks 48 case and ruling combinations, proving capture plus refund equals the milestone amount and payout plus fee equals capture. A SHA-256 manifest audit recomputes all 13 artifact hashes and is cross-checked against Node crypto in the tests. Tribunal fairness verifies the quality factor identity and that the tribunal own ruling scores the maximum for each case. An exhaustive state transition matrix drives all 35 state and event pairs, and a boundary sweep proves the integer cent rule over all 10,001 basis point values. The results feed a reproducible verification bundle with eight self checks, visible in a new telemetry panel and exportable as JSON.
 
-Money stays integer cents, splits stay integer basis points, and the audit ledger still renders in AG Grid Community with an accessible HTML table fallback. 495 passing tests across seven suites, a 31-check headless Chromium audit at desktop and phone sizes, 0 violations on the local honesty harness, zero runtime dependencies, and a plainly stated simulation boundary.
+Money stays integer cents, splits stay integer basis points, and the audit ledger still renders in AG Grid Community with an accessible HTML table fallback. 496 passing tests across seven suites, a 31-check headless Chromium audit at desktop and phone sizes, 0 violations on the local honesty harness, zero runtime dependencies, and a plainly stated simulation boundary.
 
 The second upgrade adds an adversarial mechanism lab. Five escrow protocols are stressed against six adversarial behaviors on an explicit integer-cent pot ledger, proving value conservation per cell. The lab computes the honest dominance margin, griefing ROI, the exact deterrence threshold over a 0 to 150 percent bond sweep (jury bribery deters at 92.5 percent), deterrence windows where cheap attacks re-emerge, and the minimum bond for incentive compatibility. An interactive payoff matrix, a bond-threshold chart, SHA-256 checksummed JSON, CSV and Markdown exports, strict URL bookmarks and a live self-test panel round it out.
 
@@ -70,7 +70,7 @@ The second upgrade adds an adversarial mechanism lab. Five escrow protocols are 
 - An adversarial mechanism lab proves exact integer-cent conservation on every protocol and attack cell, and derives dominance margins, griefing ROI, deterrence thresholds and windows, and the minimum bond for incentive compatibility (the jury alone reaches it at 92.5 percent).
 - A Run Self-Tests panel proves twelve properties live in the browser: FIPS 180-4 SHA-256 vectors, 270-cell conservation, threshold monotonicity, bounded liveness, CSV escaping and tamper detection, plus checksummed exports and strict URL bookmarks.
 - The audit ledger renders in AG Grid Community when available and an accessible HTML table otherwise; the whole app is dependency free and runs offline.
-- Honest and reproducible: 495 passing tests, a 31-check real headless Chromium audit at two viewports, 0 violations on the local honesty harness, no dashes, no model attributions, no live PayPal call, and no claim of any live integration or outcome.
+- Honest and reproducible: 496 passing tests, a 31-check real headless Chromium audit at two viewports, 0 violations on the local honesty harness, no dashes, no model attributions, no live PayPal call, and no claim of any live integration or outcome.
 
 ## Submission checklist
 

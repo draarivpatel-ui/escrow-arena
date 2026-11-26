@@ -602,13 +602,21 @@ test('PASS2 22: rendered HTML escapes every dynamic sink the audit named', () =>
   assert.ok(!src.includes('Math.max.apply'), 'drawLatency must not use apply on unbounded arrays');
 });
 
-test('PASS2 23: CDN assets carry SRI and the CSP only loosens style-src for the grid', () => {
+test('PASS2 23: grid assets are local and the CSP allows no remote script or style host', () => {
   // AG Grid positions cells through inline styles, so style-src keeps
-  // 'unsafe-inline'; script-src stays strict and every CDN asset is SRI-pinned.
-  assert.equal((html.match(/integrity="sha384-/g) || []).length, 3);
-  assert.equal((html.match(/crossorigin="anonymous"/g) || []).length, 3);
-  assert.match(html, /script-src 'self' https:\/\/cdn\.jsdelivr\.net/);
+  // 'unsafe-inline'; script-src and style-src otherwise stay self-only.
+  assert.doesNotMatch(html, /cdn\.jsdelivr\.net|unpkg|fonts\.googleapis\.com/);
+  assert.match(html, /script-src 'self'; style-src 'self' 'unsafe-inline'/);
   assert.match(html, /object-src 'none'; base-uri 'none'; form-action 'none'/);
+  ['vendor/ag-grid/ag-grid-community.min.noStyle.js', 'vendor/ag-grid/ag-grid.min.css', 'vendor/ag-grid/ag-theme-quartz.min.css'].forEach((file) => {
+    assert.ok(fs.existsSync(path.join(root, file)), file);
+  });
+});
+
+test('PASS2 24: printable evidence and ledger surfaces have print cleanup', () => {
+  assert.match(css, /@media print\s*\{/);
+  assert.match(css, /@media print\s*\{[\s\S]*button, input, select/);
+  assert.match(css, /@media print\s*\{[\s\S]*overflow:\s*visible/);
 });
 
 test('PASS3 01: artifact hashes never treat missing content as verified', () => {

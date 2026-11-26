@@ -37,7 +37,7 @@ Money is integer cents and splits are integer basis points. The capture is round
 
 ## AG Grid
 
-The audit ledger uses AG Grid Community 32.3.3 loaded from jsDelivr. If the script is blocked, offline or fails to load, the same rows render in an accessible HTML table, and the page says which view is active. The tests run in the table path by default and also inject a fake `agGrid` to check the grid path.
+The audit ledger uses AG Grid Community 32.3.3 vendored inside this repository, so even the enhanced grid path works with no network. If the script is missing or fails to load, the same rows render in an accessible HTML table, and the page says which view is active. The tests run in the table path by default and also inject a fake `agGrid` to check the grid path.
 
 ## PayPal usage, stated plainly
 
@@ -53,13 +53,13 @@ The audit ledger uses AG Grid Community 32.3.3 loaded from jsDelivr. If the scri
 npm test
 ```
 
-This runs `node --test` with no installs. 495 passing tests across seven suites:
+This runs `node --test` with no installs. 496 passing tests across seven suites:
 
 - `tests/engine.test.js`: hashing, money rounding, the agents, the state machine, the request builders, the simulator and scoring.
 - `tests/dom-smoke.test.js`: the markup, the controller on a small fake DOM in both grid modes, and repository scans for dashes, emoji, uppercase kickers, credential-shaped strings and private details.
 - `tests/analytics.test.js`: 28 tests over money reconciliation, the SHA-256 manifest audit checked against Node crypto, tribunal fairness identities, the exhaustive state transition matrix, integer basis point boundaries and the reproducible verification bundle.
 - `tests/compliance.test.js`: 10 tests locking the no-dash, no-disclosure, no-private-detail and doc consistency rules.
-- `tests/hardening.test.js`: 61 adversarial tests locking input validation, NaN and Infinity rulings, sandbox double-capture and over-refund guards, malformed amount handling, money conservation invariants, CSP markup and accessibility checks.
+- `tests/hardening.test.js`: 62 adversarial tests locking input validation, NaN and Infinity rulings, sandbox double-capture and over-refund guards, malformed amount handling, money conservation invariants, CSP markup and accessibility checks.
 - `tests/mechanism.test.js`: 238 tests over the mechanism lab: exact integer-cent conservation in every protocol and attack cell across the bond grid, payoff identities, ROI sign conventions, deterrence thresholds and windows, timeout-bounded liveness, the checksummed audit exports and the strict bookmark codec.
 - `tests/mechanism-ui.test.js`: 50 tests over the lab markup, the CSP and script order, and the lab controller on the fake DOM: matrix selection, the SVG threshold chart, controls, the self-test panel, exports and bookmarking.
 
