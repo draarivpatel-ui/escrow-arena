@@ -418,6 +418,18 @@ test('MECH 37: canonicalJSON sorts keys recursively for a stable checksum', () =
   const a = M.canonicalJSON({ b: 1, a: { d: 2, c: 3 } });
   assert.equal(a, '{"a":{"c":3,"d":2},"b":1}');
   assert.equal(M.canonicalJSON([{ z: 1, y: 2 }]), '[{"y":2,"z":1}]');
+  const hostile = JSON.parse('{"safe":1,"__proto__":{"polluted":true}}');
+  const hostileCanon = M.canonicalJSON(hostile);
+  assert.equal(hostileCanon.includes('__proto__'), true);
+  assert.notEqual(hostileCanon, M.canonicalJSON({ safe: 1 }));
+  assert.equal({}.polluted, undefined);
+  const canonicalDigest = crypto.createHash('sha256').update(hostileCanon, 'utf8').digest('hex');
+  const verified = M.verifyReportChecksum({
+    body: hostile,
+    canonical: hostileCanon,
+    checksum: { digest: canonicalDigest }
+  });
+  assert.equal(verified.ok, true);
 });
 
 test('MECH 38: the audit report carries the schema, the stated bond and thirty cells', () => {
@@ -500,6 +512,11 @@ test('MECH 47: csvCell escapes formula-triggering characters', () => {
   assert.equal(M.csvCell('\r=x'), '"\'\r=x"');
   assert.equal(M.csvCell('safe'), 'safe');
   assert.equal(M.csvCell(42), '42');
+  assert.equal(M.csvCell(-9), '-9');
+  assert.equal(M.csvCell('\u200B=cmd'), "'\u200B=cmd");
+  assert.equal(M.csvCell('\u00A0+cmd'), "'\u00A0+cmd");
+  assert.equal(M.csvCell(' \uFEFF@cmd'), "' \uFEFF@cmd");
+  assert.equal(M.csvCell('\uFF1D2+2'), "'\uFF1D2+2");
 });
 
 test('MECH 48: csvCell quotes commas, quotes and newlines', () => {

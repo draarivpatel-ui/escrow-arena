@@ -616,7 +616,7 @@
   function canonicalize(v) {
     if (Array.isArray(v)) return v.map(canonicalize);
     if (v && typeof v === 'object') {
-      var o = {};
+      var o = Object.create(null);
       Object.keys(v).sort().forEach(function (k) { o[k] = canonicalize(v[k]); });
       return o;
     }
@@ -693,7 +693,7 @@
   // single quote so a hostile label can never execute as a formula.
   function csvCell(v) {
     var s = v === null || v === undefined ? '' : String(v);
-    if (/^[\s]*[=+\-@\t\r]/.test(s)) s = "'" + s;
+    if (typeof v !== 'number' && /^[\s\p{Cf}\p{Cc}]*[=+\-@\t\r]/u.test(s.normalize('NFKC'))) s = "'" + s;
     if (/[",\n\r]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
     return s;
   }
