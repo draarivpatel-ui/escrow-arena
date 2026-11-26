@@ -415,4 +415,10 @@ test('DOM 45: print output strips dark header and code-block ink traps', () => {
   assert.match(print, /pre\.code\s*\{[\s\S]*?background:\s*#fff;/);
   assert.match(print, /pre\.code\s*\{[\s\S]*?color:\s*#111;/);
   assert.match(print, /pre\.code\s*\{[\s\S]*?border:\s*1px solid #999;/);
+  assert.match(print, /#ledger-grid\s*\{[^}]*display:\s*none !important;/);
+  assert.match(print, /#ledger-fallback, #ledger-fallback\[hidden\]\s*\{[^}]*display:\s*block !important;/);
+  assert.match(css, /--control-line:\s*#667791/);
+  assert.match(css, /input\[type="range"\]\s*\{[^}]*border:\s*1px solid var\(--control-line\)/);
+  assert.match(css, /\.mcell\.pos\s*\{[^}]*border-color:\s*#b4283a/);
+  assert.match(css, /\.mcell\.det\s*\{[^}]*border-color:\s*#0b7d57/);
 });

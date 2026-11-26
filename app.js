@@ -296,16 +296,16 @@
       var rows = engine.buildLedger(ctl.caseObj, ctl.run, ctl.convened, ctl.filed ? ctl.ruling : null);
       var useGrid = ctl.ledgerMode === 'ag-grid' && ctl.grid;
       var gridEl = $('ledger-grid'), fallback = $('ledger-fallback');
+      var head = engine.LEDGER_COLUMNS.map(function (c) { return '<th scope="col">' + esc(c.headerName) + '</th>'; }).join('');
+      var body = rows.map(function (r) {
+        return '<tr>' + engine.LEDGER_COLUMNS.map(function (c) { return '<td>' + esc(r[c.field]) + '</td>'; }).join('') + '</tr>';
+      }).join('');
+      setHTML('ledger-table', '<caption class="hint-line">Audit ledger, ' + rows.length + ' rows</caption><thead><tr>' + head + '</tr></thead><tbody>' + body + '</tbody>');
       if (useGrid) {
         if (ctl.grid.setGridOption) ctl.grid.setGridOption('rowData', rows);
         if (gridEl) gridEl.hidden = false;
         if (fallback) fallback.hidden = true;
       } else {
-        var head = engine.LEDGER_COLUMNS.map(function (c) { return '<th scope="col">' + esc(c.headerName) + '</th>'; }).join('');
-        var body = rows.map(function (r) {
-          return '<tr>' + engine.LEDGER_COLUMNS.map(function (c) { return '<td>' + esc(r[c.field]) + '</td>'; }).join('') + '</tr>';
-        }).join('');
-        setHTML('ledger-table', '<caption class="hint-line">Audit ledger, ' + rows.length + ' rows</caption><thead><tr>' + head + '</tr></thead><tbody>' + body + '</tbody>');
         if (gridEl) gridEl.hidden = true;
         if (fallback) fallback.hidden = false;
       }

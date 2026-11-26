@@ -5,6 +5,9 @@
   --paper: #eef2f8;
   --card: #ffffff;
   --line: #d6deeb;
+  --control-line: #667791;
+  --top-control-line: #9eb0d2;
+  --top-primary-line: #a6b0ff;
   --indigo: #3b4cca;
   --indigo-2: #2b39a6;
   --green: #0b7d57;
@@ -64,7 +67,7 @@ h3 { font-size: 0.92rem; }
 select, input[type="password"] {
   background: #fff;
   color: var(--ink);
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-line);
   border-radius: 10px;
   padding: 10px 12px;
   min-height: 44px;
@@ -76,7 +79,7 @@ select, input[type="password"] {
   min-height: 44px;
   padding: 10px 16px;
   border-radius: 12px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-line);
   background: #fff;
   color: var(--ink);
   font: inherit;
@@ -89,7 +92,8 @@ select, input[type="password"] {
 .btn.primary { background: var(--indigo); border-color: var(--indigo); color: #fff; }
 .btn.gold { background: var(--gold); border-color: var(--gold); color: var(--gold-ink); }
 .btn.ghost { background: transparent; }
-.top .btn.ghost { color: #fff; border-color: #4a5d80; }
+.top .btn.ghost { color: #fff; border-color: var(--top-control-line); }
+.top .btn.primary { border-color: var(--top-primary-line); }
 
 :focus-visible { outline: 3px solid #ff9f1c; outline-offset: 2px; }
 
@@ -153,7 +157,7 @@ th { color: var(--muted); font-weight: 600; font-size: 0.78rem; }
 .kv b { font-family: var(--mono); font-weight: 600; }
 
 .slider { display: grid; gap: 8px; min-width: 0; max-width: 100%; font-size: 0.85rem; color: var(--ink-2); }
-input[type="range"] { display: block; width: calc(100% - 2px); max-width: calc(100% - 2px); accent-color: var(--indigo); min-height: 44px; }
+input[type="range"] { display: block; width: calc(100% - 2px); max-width: calc(100% - 2px); accent-color: var(--indigo); min-height: 44px; border: 1px solid var(--control-line); border-radius: 10px; background: #fff; padding: 0 8px; }
 .split { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 8px 0 14px; }
 .split div { padding: 10px 12px; border-radius: 12px; }
 .split .cap { background: var(--green-bg); color: #0a4a35; }
@@ -167,7 +171,7 @@ legend { color: var(--muted); padding: 0 6px; font-size: 0.82rem; }
   min-height: 44px;
   padding: 8px 14px;
   border-radius: 999px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-line);
   background: #fff;
   font: inherit;
   cursor: pointer;
@@ -189,7 +193,7 @@ legend { color: var(--muted); padding: 0 6px; font-size: 0.82rem; }
   min-height: 44px;
   padding: 6px 12px;
   border-radius: 10px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-line);
   background: #fff;
   font: inherit;
   font-size: 0.82rem;
@@ -274,9 +278,9 @@ legend { color: var(--muted); padding: 0 6px; font-size: 0.82rem; }
   cursor: pointer;
   white-space: nowrap;
 }
-.mcell.pos { border-color: #e3b6bd; background: var(--red-bg); color: #6c1420; }
-.mcell.det { border-color: #a8d8c3; background: var(--green-bg); color: #0a4a35; }
-.mcell.base { border-color: var(--line); background: #eef2f8; color: var(--muted); }
+.mcell.pos { border-color: #b4283a; background: var(--red-bg); color: #6c1420; }
+.mcell.det { border-color: #0b7d57; background: var(--green-bg); color: #0a4a35; }
+.mcell.base { border-color: var(--control-line); background: #eef2f8; color: var(--muted); }
 .mcell.sel { outline: 3px solid #ff9f1c; outline-offset: 1px; }
 .conserve { font-family: var(--mono); font-size: 0.78rem; color: var(--green); margin: 10px 0 0; }
 .lab-notes { margin: 8px 0 0; padding-left: 18px; font-size: 0.84rem; color: var(--ink-2); display: grid; gap: 4px; }
@@ -322,8 +326,12 @@ legend { color: var(--muted); padding: 0 6px; font-size: 0.82rem; }
   .top .field, .top .btn.ghost { color: #111; }
   .mark { color: #111; }
   h2 { color: #111; }
-  .panel, .table-wrap, pre { box-shadow: none !important; break-inside: avoid; }
+  .panel, .table-wrap, pre, tr, .agent { box-shadow: none !important; break-inside: avoid; }
   .table-wrap, pre { overflow: visible !important; max-height: none !important; white-space: pre-wrap; }
+  #ledger-grid { display: none !important; }
+  #ledger-fallback, #ledger-fallback[hidden] { display: block !important; overflow: visible !important; max-height: none !important; }
+  #ledger-table { font-size: 0.68rem; table-layout: auto; }
+  #ledger-table th, #ledger-table td { padding: 4px 5px; overflow-wrap: anywhere; }
   pre.code {
     background: #fff;
     color: #111;
