@@ -74,7 +74,7 @@ The second upgrade adds an adversarial mechanism lab. Five escrow protocols are 
 
 ## Submission checklist
 
-- [x] Tests pass: 495 of 495.
+- [x] Tests pass: 496 of 496.
 - [x] Headless Chromium audit: 31 of 31 checks at 1440x900 and 390x844.
 - [x] Honesty harness: 0 violations.
 - [x] No em dashes or en dashes in any file.
