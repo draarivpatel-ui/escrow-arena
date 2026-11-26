@@ -53,7 +53,7 @@ The audit ledger uses AG Grid Community 32.3.3 vendored inside this repository, 
 npm test
 ```
 
-This runs `node --test` with no installs. 496 passing tests across seven suites:
+This runs `node --test` with no installs. 497 passing tests across seven suites:
 
 - `tests/engine.test.js`: hashing, money rounding, the agents, the state machine, the request builders, the simulator and scoring.
 - `tests/dom-smoke.test.js`: the markup, the controller on a small fake DOM in both grid modes, and repository scans for dashes, emoji, uppercase kickers, credential-shaped strings and private details.

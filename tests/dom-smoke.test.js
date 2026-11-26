@@ -404,3 +404,15 @@ test('DOM 44: switching dispute resets the tribunal, ruling and result banner', 
   assert.equal(el('btn-file').disabled, false);
   assert.equal(el('ruling-slider').value, '5000');
 });
+
+test('DOM 45: print output strips dark header and code-block ink traps', () => {
+  const printStart = css.indexOf('@media print');
+  assert.notEqual(printStart, -1);
+  const print = css.slice(printStart);
+  assert.match(print, /\.top\s*\{[\s\S]*?position:\s*static;/);
+  assert.match(print, /\.top\s*\{[\s\S]*?background:\s*#fff;/);
+  assert.match(print, /\.top\s*\{[\s\S]*?color:\s*#111;/);
+  assert.match(print, /pre\.code\s*\{[\s\S]*?background:\s*#fff;/);
+  assert.match(print, /pre\.code\s*\{[\s\S]*?color:\s*#111;/);
+  assert.match(print, /pre\.code\s*\{[\s\S]*?border:\s*1px solid #999;/);
+});
