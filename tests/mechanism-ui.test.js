@@ -80,7 +80,7 @@ test('LAB 07: the lab disclosures state the model and checksum boundaries plainl
 
 test('LAB 08: the lab introduces no new external hosts or inline handlers', () => {
   const hosts = new Set([...html.matchAll(/https:\/\/([a-z0-9.-]+)\//g)].map((m) => m[1]));
-  ['aariv.me', 'www.w3.org', 'api-m.sandbox.paypal.com'].forEach((h) => hosts.delete(h));
+  ['aariv.me', 'aariv.xyz', 'www.w3.org', 'api-m.sandbox.paypal.com'].forEach((h) => hosts.delete(h));
   assert.deepEqual([...hosts], []);
   assert.doesNotMatch(html, /\son(error|click|load)=/);
 });

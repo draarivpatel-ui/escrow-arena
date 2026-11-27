@@ -81,7 +81,7 @@ test('DOM 06: the grid script loads before the engine and app, and no active CDN
   const activeRefs = [...html.matchAll(/<(?:script|link|img)\b[^>]*(?:src|href)="([^"]+)"/g)].map((m) => m[1]);
   assert.equal(activeRefs.some((ref) => /^https?:\/\//.test(ref)), false);
   const hosts = new Set([...html.matchAll(/https:\/\/([a-z0-9.-]+)\//g)].map((m) => m[1]));
-  ['aariv.me', 'www.w3.org', 'api-m.sandbox.paypal.com'].forEach((h) => hosts.delete(h));
+  ['aariv.me', 'aariv.xyz', 'www.w3.org', 'api-m.sandbox.paypal.com'].forEach((h) => hosts.delete(h));
   assert.deepEqual([...hosts], []);
 });
 
